@@ -1,6 +1,6 @@
-import { View, Text, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
-import { removeToken } from "../services/api";
+import { Text, TouchableOpacity, View } from "react-native";
+import { removeToken } from "../src/services/api";
 
 export default function Dashboard() {
   const handleLogout = async () => {
