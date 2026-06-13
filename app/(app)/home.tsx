@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
@@ -8,22 +9,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { router } from "expo-router";
 import { Colors, CommonStyles, Radius, Spacing } from '../src/components/theme';
 import { Badge, Card } from '../src/components/ui';
-import { useAuth } from '../src/context/AuthContext';
+import { useAuth, AuthProvider } from '../src/context/AuthContext';
 import { useLanguage } from '../src/context/LanguageContext';
-import { serviceApi } from '../src/services/api';
-import { RootStackParamList, ServiceRequest } from '../types';
-
-type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'Home'> };
-
-const SERVICE_TILES = [
-  { key: 'plumbing', icon: '💧', color: Colors.brand },
-  { key: 'electrical', icon: '⚡', color: Colors.amber },
-  { key: 'appliance', icon: '🔌', color: Colors.green },
-  { key: 'generalWork', icon: '🔨', color: '#993556' },
-] as const;
+import { categoryApi, serviceApi } from '../src/services/api';
+import { ServiceRequest } from '../types';
 
 function getGreeting(): 'goodMorning' | 'goodAfternoon' | 'goodEvening' {
   const h = new Date().getHours();
@@ -42,13 +33,51 @@ function getStatusBadgeVariant(status: string) {
   }
 }
 
-export default function Home({ navigation }: Props) {
+export default function Home() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const [recentJobs, setRecentJobs] = useState<ServiceRequest[]>([]);
   const [activeJob, setActiveJob] = useState<ServiceRequest | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  //dynamic Category Cards
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [errorCategories, setErrorCategories] = useState("");
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        setErrorCategories("");
+
+        const res = await categoryApi.getCategories();
+
+        console.log("CATEGORY API RAW:", res);
+
+        const list =
+          Array.isArray(res)
+            ? res
+            : Array.isArray(res?.data)
+            ? res.data
+            : Array.isArray(res?.categories)
+            ? res.categories
+            : [];
+
+        setCategories(list);
+      } catch (err) {
+        console.log("CATEGORY ERROR:", err);
+        setCategories([]);
+        setErrorCategories("Failed to load services");
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    loadCategories();
+  }, []);
+
 
   const initials = user?.full_name
     ?.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase() ?? 'U';
@@ -134,17 +163,36 @@ export default function Home({ navigation }: Props) {
         {/* Service Categories */}
         <Card label={t('requestService')} style={styles.card}>
           <View style={styles.serviceGrid}>
-            {SERVICE_TILES.map(({ key, icon, color }) => (
+
+            {loadingCategories && (
+              <Text>Loading services...</Text>
+            )}
+
+            {errorCategories !== "" && (
+              <Text style={{ color: "red" }}>{errorCategories}</Text>
+            )}
+
+            {!loadingCategories && categories.length === 0 && (
+              <Text>No services available</Text>
+            )}
+
+            {categories.map((cat) => (
               <TouchableOpacity
-                key={key}
-                style={styles.serviceTile}
-                onPress={() => router.push("/request")}
-                activeOpacity={0.75}
+                key={cat.id}
+                style={styles.cleanTile}
+                onPress={() =>
+                  router.push({
+                    pathname: "/request",
+                    params: { categoryId: cat.id },
+                  })
+                }
               >
-                <Text style={{ fontSize: 28, color }}>{icon}</Text>
-                <Text style={styles.serviceTileLabel}>{t(key as any)}</Text>
+                <Text style={styles.cleanTileText}>
+                  {cat.name}
+                </Text>
               </TouchableOpacity>
             ))}
+
           </View>
         </Card>
 
@@ -194,8 +242,7 @@ export default function Home({ navigation }: Props) {
               icon: '🧾', bg: Colors.greenBg, color: Colors.green,
               title: t('invoicesPayments'), sub: t('viewTransactions'),
               onPress: () => router.push({
-                pathname: "/payment",
-                params: { serviceId: String(serviceId) },
+                pathname: "/home",   //to be updated with payment details
               }),
             },
           ].map(({ icon, bg, color, title, sub, onPress }) => (
@@ -253,5 +300,22 @@ const styles = StyleSheet.create({
     width: 8, height: 8, borderRadius: 4,
     backgroundColor: Colors.red,
     position: 'absolute', top: 0, right: 0,
+  },
+
+  cleanTile: {
+    width: "48%",
+    paddingVertical: 18,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.cardBg,
+    alignItems: "center",
+  },
+
+  cleanTileText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: Colors.text,
+    textAlign: "center",
   },
 });

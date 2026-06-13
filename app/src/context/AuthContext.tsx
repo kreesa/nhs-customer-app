@@ -24,11 +24,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Restore session on app launch
     const restoreSession = async () => {
       try {
         const savedToken = await AsyncStorage.getItem('auth_token');
         const savedUser = await AsyncStorage.getItem('auth_user');
+
+        console.log('savedToken:', savedToken);
+        console.log('savedUser:', savedUser);
+
         if (savedToken && savedUser) {
           setToken(savedToken);
           setUser(JSON.parse(savedUser));
@@ -39,14 +42,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsLoading(false);
       }
     };
-    restoreSession();
-  }, []);
+
+    restoreSession(); // ← was missing
+  }, []); // ← closing brace was missing
 
   const signIn = async (newToken: string, newUser: Customer) => {
+    console.log('signIn called with token:', newToken);
+    console.log('signIn called with user:', JSON.stringify(newUser, null, 2));
+
     await AsyncStorage.setItem('auth_token', newToken);
     await AsyncStorage.setItem('auth_user', JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
+
+    const saved = await AsyncStorage.getItem('auth_user');
+    console.log('verified saved user:', saved);
   };
 
   const signOut = async () => {
@@ -56,7 +66,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
-  return null;
+  return (
+    <AuthContext.Provider value={{ user, token, isLoading, signIn, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => useContext(AuthContext);

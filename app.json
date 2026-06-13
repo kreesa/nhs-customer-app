@@ -39,6 +39,12 @@
           }
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow NepalHomeService to access your location to set your service address."
+        }
+      ],
       "expo-secure-store",
       "@react-native-community/datetimepicker"
     ],

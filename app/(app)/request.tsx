@@ -1,23 +1,27 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useEffect, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
   TextInput, TouchableOpacity,
   View
 } from 'react-native';
-import { router } from "expo-router";
+
+import MapView, { Marker } from 'react-native-maps';
 import { Colors, CommonStyles, Radius, Spacing } from '../src/components/theme';
 import { AppButton, Card, Topbar } from '../src/components/ui';
 import { useAuth } from '../src/context/AuthContext';
 import { useLanguage } from '../src/context/LanguageContext';
 import { categoryApi, serviceApi, uploadApi } from '../src/services/api';
-import { RootStackParamList, ServiceCategory, ServiceSubCategory } from '../types';
+import { mapPickerStore } from '../src/store/mapPickerStore';
+import { ServiceCategory, ServiceSubCategory } from '../types';
 
-type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'Request'> };
 
 const TIME_SLOTS = [
   '8:00 – 10:00 AM', '10:00 AM – 12:00 PM',
@@ -25,17 +29,29 @@ const TIME_SLOTS = [
   '4:00 – 6:00 PM', '6:00 – 8:00 PM',
 ];
 
-export default function Request({ navigation }: Props) {
-  const { user } = useAuth();
+export default function Request() {
+  // const { user } = useAuth();
+
   const { t } = useLanguage();
+  
+  const { categoryId } = useLocalSearchParams();
+
+  // console.log("CATEGORY ID FROM ROUTE:", categoryId); 
 
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [subCategories, setSubCategories] = useState<ServiceSubCategory[]>([]);
 
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState<number | null>(null);
+  
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingSubCategories, setLoadingSubCategories] = useState(false);
+  const [errorCategories, setErrorCategories] = useState("");
+  
   const [description, setDescription] = useState('');
-  const [address, setAddress] = useState(user?.service_address ?? '');
+  const [address, setAddress] = useState('');
+  // To be Updated
+  // const [address, setAddress] = useState(user?.service_address ?? '');
   const [images, setImages] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -43,73 +59,195 @@ export default function Request({ navigation }: Props) {
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
 
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+
   useEffect(() => {
-    categoryApi.getCategories().then(setCategories).catch(console.error);
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        setErrorCategories("");
+
+        const res = await categoryApi.getCategories();
+
+        const list = Array.isArray(res)
+          ? res
+          : res?.data || [];
+
+        setCategories(list);
+
+      } catch (e) {
+        setErrorCategories("Failed to load categories");
+        setCategories([]);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    loadCategories();
   }, []);
 
+  // Auto-select + sync AFTER categories are loaded
   useEffect(() => {
-    if (selectedCategory) {
-      categoryApi.getSubCategories(selectedCategory)
-        .then(setSubCategories)
-        .catch(console.error);
-      setSelectedSubCategory(null);
+    if (categoryId && categories.length > 0) {
+      const id = Number(categoryId);
+
+      const exists = categories.some((c) => c.id === id);
+
+      if (exists) {
+        setSelectedCategory(id);
+      }
     }
+  }, [categoryId, categories]);
+
+  useEffect(() => {
+    const loadSubCategories = async () => {
+      if (!selectedCategory) return;
+
+      try {
+        setLoadingSubCategories(true);
+
+        const res = await categoryApi.getSubCategories(selectedCategory);
+
+        const list = Array.isArray(res)
+          ? res
+          : res?.data || [];
+
+        setSubCategories(list);
+        setSelectedSubCategory(null);
+      } catch (e) {
+        setSubCategories([]);
+      } finally {
+        setLoadingSubCategories(false);
+      }
+    };
+
+    loadSubCategories();
   }, [selectedCategory]);
 
-  const pickImage = async () => {
-    if (images.length >= 5) {
-      Alert.alert('Limit reached', 'Maximum 5 files allowed.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setImages((prev) => [...prev, result.assets[0].uri]);
-    }
-  };
+  // map Picker
+  useFocusEffect(
+    useCallback(() => {
+      // Subscribe when screen comes into focus
+      mapPickerStore.subscribe((result) => {
+        if (result) {
+          setLatitude(result.latitude);
+          setLongitude(result.longitude);
+          if (result.address) {
+            setAddress(result.address); // ← only update address if a real address resolved
+          }
+          mapPickerStore.clear();
+        }
+      });
+
+      // Cleanup when screen loses focus
+      return () => {
+        mapPickerStore.subscribe(null);
+      };
+    }, [])
+  );
 
   const handleSubmit = async () => {
     if (!selectedCategory) { Alert.alert('Error', 'Please select a service category.'); return; }
     if (!selectedSubCategory) { Alert.alert('Error', 'Please select a sub-category.'); return; }
     if (!description.trim()) { Alert.alert('Error', 'Please describe the problem.'); return; }
     if (!address.trim()) { Alert.alert('Error', 'Please enter a service address.'); return; }
+    if (!latitude || !longitude) { Alert.alert('Error', 'Please pin your service location on the map.'); return; }
     if (!selectedSlot) { Alert.alert('Error', 'Please select a time slot.'); return; }
-    if (!user) return;
+    
+    const userId = await AsyncStorage.getItem('user_id');
+    // console.log('UserId', userId);
+    if (!userId) {
+      Alert.alert('Error', 'Session expired. Please log in again.');
+      return;
+    }
 
     setLoading(true);
     try {
-      // Upload images first
+      // Upload images
       const uploadedUrls: string[] = [];
       for (const uri of images) {
         try {
           const res = await uploadApi.uploadImage(uri);
           uploadedUrls.push(res.url);
-        } catch { /* continue even if upload fails */ }
+        } catch (uploadErr: any) {
+          console.warn('Image upload failed:', uploadErr.message);
+        }
       }
 
-      const req = await serviceApi.createRequest(user.id, {
+      const payload = {
         service_category: selectedCategory,
         service_subcategory: selectedSubCategory,
         problem_description: description,
         problem_images: uploadedUrls,
         service_location: address,
-        longitude: user.longitude ?? 0,
-        latitude: user.latitude ?? 0,
+        longitude: longitude ?? 0,
+        latitude: latitude ?? 0,
         requested_date: selectedDate.toISOString().split('T')[0],
         requested_timeslot: selectedSlot,
-      });
+      };
+
+      console.log('Submitting payload:', JSON.stringify(payload, null, 2));
+
+      const req = await serviceApi.createRequest(Number(userId), payload);
+      console.log('Number(userId):', JSON.stringify(Number(userId), null, 2));
+      console.log('Request created:', JSON.stringify(req, null, 2));
 
       router.push({
-        pathname: "/track",
+        pathname: '/track',
         params: { serviceId: req.id },
       });
 
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to submit request.');
+      console.error('Submit failed:', JSON.stringify(err, null, 2));
+
+      // Laravel validation errors come as err.body.errors object
+      const validationErrors = err?.body?.errors;
+      if (validationErrors) {
+        const messages = Object.entries(validationErrors)
+          .map(([field, msgs]) => `• ${field}: ${(msgs as string[]).join(', ')}`)
+          .join('\n');
+        Alert.alert('Validation Error', messages);
+        return;
+      }
+
+      // Single message from server
+      if (err?.body?.message) {
+        Alert.alert('Server Error', err.body.message);
+        return;
+      }
+
+      // Fallback
+      Alert.alert('Error', err.message || 'Failed to submit request. Please try again.');
+
     } finally {
       setLoading(false);
+    }
+  };
+
+  const pickImage = async () => {
+    if (images.length >= 5) {
+      Alert.alert('Limit reached', 'Maximum 5 files allowed.');
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.5,
+        allowsEditing: false,
+        exif: false,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const uri = result.assets[0]?.uri;
+        if (uri) {
+          setImages((prev) => [...prev, uri]);
+        }
+      }
+    } catch (err: any) {
+      console.error('Image picker error:', err.message);
+      Alert.alert('Error', 'Could not open image picker.');
     }
   };
 
@@ -145,26 +283,30 @@ export default function Request({ navigation }: Props) {
           {/* Category Picker */}
           <View style={styles.field}>
             <Text style={CommonStyles.fieldLabel}>{t('serviceCategory')}</Text>
+
+            {loadingCategories && <Text>Loading categories...</Text>}
+            {errorCategories ? <Text style={{ color: "red" }}>{errorCategories}</Text> : null}
+
+            {!loadingCategories && categories.length === 0 && (
+              <Text>No categories available</Text>
+            )}
+
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4 }}>
               {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
-                  style={[styles.chip, selectedCategory === cat.id && styles.chipSelected]}
+                  style={[
+                    styles.chip,
+                    selectedCategory === cat.id && styles.chipSelected
+                  ]}
                   onPress={() => setSelectedCategory(cat.id)}
                 >
-                  <Text style={[styles.chipText, selectedCategory === cat.id && styles.chipTextSelected]}>
+                  <Text style={[
+                    styles.chipText,
+                    selectedCategory === cat.id && styles.chipTextSelected
+                  ]}>
                     {cat.name}
                   </Text>
-                </TouchableOpacity>
-              ))}
-              {/* Fallback if API not yet connected */}
-              {categories.length === 0 && ['Plumbing', 'Electrical', 'Appliance', 'General'].map((name, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={[styles.chip, selectedCategory === i + 1 && styles.chipSelected]}
-                  onPress={() => setSelectedCategory(i + 1)}
-                >
-                  <Text style={[styles.chipText, selectedCategory === i + 1 && styles.chipTextSelected]}>{name}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -172,32 +314,36 @@ export default function Request({ navigation }: Props) {
 
           {/* Sub-category Picker */}
           {selectedCategory && (
-            <View style={styles.field}>
-              <Text style={CommonStyles.fieldLabel}>{t('subCategory')}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4 }}>
-                {subCategories.map((sub) => (
-                  <TouchableOpacity
-                    key={sub.id}
-                    style={[styles.chip, selectedSubCategory === sub.id && styles.chipSelected]}
-                    onPress={() => setSelectedSubCategory(sub.id)}
-                  >
-                    <Text style={[styles.chipText, selectedSubCategory === sub.id && styles.chipTextSelected]}>
-                      {sub.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-                {subCategories.length === 0 && ['Pipe leak', 'Drain blockage', 'Tap replacement', 'Other'].map((name, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    style={[styles.chip, selectedSubCategory === i + 1 && styles.chipSelected]}
-                    onPress={() => setSelectedSubCategory(i + 1)}
-                  >
-                    <Text style={[styles.chipText, selectedSubCategory === i + 1 && styles.chipTextSelected]}>{name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
+          <View style={styles.field}>
+            <Text style={CommonStyles.fieldLabel}>{t('subCategory')}</Text>
+
+            {loadingSubCategories && <Text>Loading sub-categories...</Text>}
+
+            {!loadingSubCategories && subCategories.length === 0 && (
+              <Text>No sub-categories available</Text>
+            )}
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4 }}>
+              {subCategories.map((sub) => (
+                <TouchableOpacity
+                  key={sub.id}
+                  style={[
+                    styles.chip,
+                    selectedSubCategory === sub.id && styles.chipSelected
+                  ]}
+                  onPress={() => setSelectedSubCategory(sub.id)}
+                >
+                  <Text style={[
+                    styles.chipText,
+                    selectedSubCategory === sub.id && styles.chipTextSelected
+                  ]}>
+                    {sub.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
           {/* Description */}
           <View style={styles.field}>
@@ -229,10 +375,47 @@ export default function Request({ navigation }: Props) {
             />
           </View>
           {/* Map placeholder */}
-          <View style={styles.mapPh}>
-            <Text style={{ fontSize: 32, marginBottom: 8 }}>📍</Text>
-            <Text style={{ color: Colors.green, fontSize: 13, fontWeight: '500' }}>Add Coordinate</Text>
-            <Text style={{ color: Colors.green, fontSize: 11, opacity: 0.7, marginTop: 2 }}>Tap to pin your location</Text>
+          <View>
+            <TouchableOpacity
+              style={styles.mapTrigger}
+              onPress={() => router.push({
+                pathname: '/mappicker',
+                params: {
+                  initialLatitude: latitude ? String(latitude) : '',
+                  initialLongitude: longitude ? String(longitude) : '',
+                },
+              })}
+              activeOpacity={0.9}
+            >
+              {latitude && longitude ? (
+                <>
+                  <MapView
+                    style={StyleSheet.absoluteFill}
+                    region={{ latitude, longitude, latitudeDelta: 0.005, longitudeDelta: 0.005 }}
+                    scrollEnabled={false}
+                    zoomEnabled={false}
+                    pointerEvents="none"
+                  >
+                    <Marker coordinate={{ latitude, longitude }} pinColor="#185FA5" />
+                  </MapView>
+                  <View style={styles.mapOverlay}>
+                    <Text style={styles.mapOverlayText}>
+                      📍  {latitude.toFixed(5)}, {longitude.toFixed(5)}  ·  Tap to change
+                    </Text>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.mapPh}>
+                  <Text style={{ fontSize: 32, marginBottom: 8 }}>📍</Text>
+                  <Text style={{ color: '#3B6D11', fontSize: 13, fontWeight: '500' }}>
+                    Tap to pin your location
+                  </Text>
+                  <Text style={{ color: '#3B6D11', fontSize: 11, opacity: 0.7, marginTop: 2 }}>
+                    Required for service request
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
         </Card>
 
@@ -251,8 +434,14 @@ export default function Request({ navigation }: Props) {
                   style={styles.thumb}
                   onPress={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
                 >
-                  <Text style={{ fontSize: 22 }}>🖼️</Text>
-                  <View style={styles.thumbDelete}><Text style={{ color: Colors.white, fontSize: 10 }}>✕</Text></View>
+                  <Image
+                    source={{ uri }}
+                    style={styles.thumbImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.thumbDelete}>
+                    <Text style={{ color: Colors.white, fontSize: 10 }}>✕</Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -338,13 +527,18 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg, padding: 20, alignItems: 'center',
   },
   thumb: {
-    width: 60, height: 60, borderRadius: 10, backgroundColor: Colors.brandBg,
-    alignItems: 'center', justifyContent: 'center', marginRight: 8,
+    width: 70, height: 70, borderRadius: 10,
+    marginRight: 8, overflow: 'hidden',  // ← overflow hidden so image clips to border radius
+  },
+  thumbImage: {
+    width: '100%',
+    height: '100%',
   },
   thumbDelete: {
-    position: 'absolute', top: 2, right: 2,
-    width: 16, height: 16, borderRadius: 8,
-    backgroundColor: Colors.red, alignItems: 'center', justifyContent: 'center',
+    position: 'absolute', top: 4, right: 4,
+    width: 18, height: 18, borderRadius: 9,
+    backgroundColor: Colors.red,
+    alignItems: 'center', justifyContent: 'center',
   },
   slotGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   slot: {
@@ -355,4 +549,17 @@ const styles = StyleSheet.create({
   slotSelected: { borderColor: Colors.brand, backgroundColor: Colors.brandBg },
   slotText: { fontSize: 12, fontWeight: '500', color: Colors.text2 },
   slotTextSelected: { color: Colors.brandDark },
+
+  mapTrigger: {
+    height: 160, borderRadius: 12,
+    overflow: 'hidden', borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.14)',
+  },
+  mapOverlay: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingVertical: 7, paddingHorizontal: 12,
+  },
+  mapOverlayText: { color: '#fff', fontSize: 12, fontWeight: '500' },
+
 });

@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -8,7 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { router, useLocalSearchParams, useRouter } from "expo-router";
 import { Colors, CommonStyles, Radius, Spacing } from '../src/components/theme';
 import { AppButton, Card, Divider, InvoiceTotal, RowKV, Topbar } from '../src/components/ui';
 import { useLanguage } from '../src/context/LanguageContext';
@@ -16,7 +16,6 @@ import { serviceApi, uploadApi } from '../src/services/api';
 import { PricingSummary, RootStackParamList } from '../types';
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'Payment'>;
   route: RouteProp<RootStackParamList, 'Payment'>;
 };
 

@@ -18,16 +18,26 @@ export async function removeToken() {
   return SecureStore.deleteItemAsync("auth_token");
 }
 
-/* ─────────────────────────────────────────────
-   CORE REQUEST WRAPPER (clean + reusable)
+/** ─────────────────────────────────────────────
+ * Core HTTP request wrapper used by all API calls.
+ *
+ * - Automatically attaches Bearer token if the user is logged in
+ * - Parses JSON response body
+ * - Throws a readable error if the response is not OK (4xx / 5xx)
+ *
+ * @param path    - API endpoint path e.g. '/api/auth/login'
+ * @param options - Standard fetch options (method, body, headers etc.)
+ * @returns       - Parsed JSON response typed as T
+ * @throws        - Error with server message or fallback HTTP status
 ──────────────────────────────────────────── */
-
 async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
+  // Retrieve stored auth token (null if not logged in)
   const token = await getToken();
 
+  // Build headers — inject token if available
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -40,8 +50,10 @@ async function request<T>(
     headers,
   });
 
+  // Attempt to parse body — fallback to empty object if not valid JSON
   const data = await response.json().catch(() => ({}));
 
+  // Throw structured error for non-2xx responses
   if (!response.ok) {
     throw new Error(data.message || `HTTP ${response.status}`);
   }
@@ -121,7 +133,7 @@ export const authApi = {
 };
 
 /* ─────────────────────────────────────────────
-   CUSTOMER / SERVICES (from your second project)
+   CUSTOMER / SERVICES
 ──────────────────────────────────────────── */
 
 export const customerApi = {
@@ -144,30 +156,34 @@ export const categoryApi = {
 };
 
 export const serviceApi = {
-  createRequest: (customerId: number, data: any) =>
-    request(`/api/${customerId}/service-request`, {
+  createRequest: async (customerId: number, data: ServiceRequestPayload) => {
+    const res: any = await request(`/api/${customerId}/service-request`, {
       method: "POST",
       body: JSON.stringify(data),
-    }),
+    });
+    return res?.data ?? res;
+  },
 
-  getRequest: (id: number) =>
-    request(`/api/service-request/${id}`),
+  getRequest: async (id: number) => {
+    const res: any = await request(`/api/service-request/${id}`);
+    return res?.data ?? res;
+  },
 
-  getMyRequests: () =>
-    request("/api/service-requests/my"),
+  getMyRequests: async () => {
+    const res: any = await request("/api/service-requests/my");
+    return res?.data ?? res;
+  },
 
-  trackTechnician: (serviceId: number, technicianId: number) =>
-    request(`/api/${serviceId}/track-technician/${technicianId}`),
+  trackTechnician: async (serviceId: number, technicianId: number) => {
+    const res: any = await request(`/api/${serviceId}/track-technician/${technicianId}`);
+    return res?.data ?? res;
+  },
 
   agreeToQuotation: (serviceId: number) =>
-    request(`/api/${serviceId}/agree-quotation`, {
-      method: "PUT",
-    }),
+    request(`/api/${serviceId}/agree-quotation`, { method: "PUT" }),
 
   declineQuotation: (serviceId: number) =>
-    request(`/api/${serviceId}/decline-quotation`, {
-      method: "PUT",
-    }),
+    request(`/api/${serviceId}/decline-quotation`, { method: "PUT" }),
 
   submitComplaint: (serviceId: number, complaint: string) =>
     request(`/api/${serviceId}/customer_complaints`, {

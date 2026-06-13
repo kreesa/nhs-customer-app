@@ -11,12 +11,10 @@ import {
 import { router } from "expo-router";
 import { Colors, CommonStyles, Radius, Spacing } from '../src/components/theme';
 import { AppButton, Card, RowKV, Topbar } from '../src/components/ui';
-import { useAuth } from '../src/context/AuthContext';
+import { useAuth, AuthProvider } from '../src/context/AuthContext';
 import { useLanguage } from '../src/context/LanguageContext';
 import { customerApi } from '../src/services/api';
 import { Customer, RootStackParamList } from '../types';
-
-type Props = { navigation: NativeStackNavigationProp<RootStackParamList, 'Profile'> };
 
 const TIME_SLOTS = [
   '8:00 – 10:00 AM', '10:00 AM – 12:00 PM',
@@ -25,7 +23,7 @@ const TIME_SLOTS = [
 
 const NOTIF_OPTIONS = ['SMS + Push notification', 'Push only', 'SMS only'];
 
-export default function Profile({ navigation }: Props) {
+export default function Profile() {
   const { user, signOut } = useAuth();
   const { t, toggleLanguage, language } = useLanguage();
 
@@ -39,7 +37,7 @@ export default function Profile({ navigation }: Props) {
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [address, setAddress] = useState(user?.service_address ?? '');
-  const [prefSlot, setPrefSlot] = useState(user?.preferred_timeslot ?? TIME_SLOTS[1]);
+  // const [prefSlot, setPrefSlot] = useState(user?.preferred_timeslot ?? TIME_SLOTS[1]);
   const [notifPref, setNotifPref] = useState(user?.notification_preference ?? NOTIF_OPTIONS[0]);
 
   useEffect(() => {
@@ -50,7 +48,7 @@ export default function Profile({ navigation }: Props) {
         setEmail(p.email);
         setPhone(p.phone);
         setAddress(p.service_address ?? '');
-        setPrefSlot(p.preferred_timeslot ?? TIME_SLOTS[1]);
+        // setPrefSlot(p.preferred_timeslot ?? TIME_SLOTS[1]);
         setNotifPref(p.notification_preference ?? NOTIF_OPTIONS[0]);
       })
       .catch(console.error);
@@ -64,7 +62,7 @@ export default function Profile({ navigation }: Props) {
         email,
         phone,
         service_address: address,
-        preferred_timeslot: prefSlot,
+        // preferred_timeslot: prefSlot,
         notification_preference: notifPref,
       });
       Alert.alert('Saved', 'Profile updated successfully.');
@@ -138,7 +136,9 @@ export default function Profile({ navigation }: Props) {
 
         {/* Preferences */}
         <Card label={t('preferences')}>
-          <View style={styles.field}>
+          
+          {/* To be Updated Later -> Add office time and Extra Time later*/}
+          {/*<View style={styles.field}>
             <Text style={CommonStyles.fieldLabel}>{t('preferredTimeSlot')}</Text>
             <View style={styles.optionList}>
               {TIME_SLOTS.map((slot) => (
@@ -154,9 +154,9 @@ export default function Profile({ navigation }: Props) {
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
+          </View> */}
 
-          <View style={styles.field}>
+          {/*<View style={styles.field}>
             <Text style={CommonStyles.fieldLabel}>{t('notificationPref')}</Text>
             <View style={styles.optionList}>
               {NOTIF_OPTIONS.map((opt) => (
@@ -173,6 +173,7 @@ export default function Profile({ navigation }: Props) {
               ))}
             </View>
           </View>
+          */}
         </Card>
 
         {/* Service Summary */}
