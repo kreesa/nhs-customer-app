@@ -20,7 +20,7 @@ import { useAuth } from '../src/context/AuthContext';
 import { useLanguage } from '../src/context/LanguageContext';
 import { categoryApi, serviceApi, uploadApi } from '../src/services/api';
 import { mapPickerStore } from '../src/store/mapPickerStore';
-import { ServiceCategory, ServiceSubCategory } from '../types';
+import { ServiceCategory, ServiceSubCategory } from '../src/types';
 
 
 const TIME_SLOTS = [
@@ -62,6 +62,7 @@ export default function Request() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
 
+
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -73,7 +74,7 @@ export default function Request() {
         const list = Array.isArray(res)
           ? res
           : res?.data || [];
-
+        
         setCategories(list);
 
       } catch (e) {
@@ -147,6 +148,12 @@ export default function Request() {
     }, [])
   );
 
+
+  const selectedCategoryData = categories.find(
+    (c) => c.id === selectedCategory
+  );
+  const executionMode = selectedCategoryData?.execution_mode;
+
   const handleSubmit = async () => {
     if (!selectedCategory) { Alert.alert('Error', 'Please select a service category.'); return; }
     if (!selectedSubCategory) { Alert.alert('Error', 'Please select a sub-category.'); return; }
@@ -176,15 +183,17 @@ export default function Request() {
       }
 
       const payload = {
-        service_category: selectedCategory,
-        service_subcategory: selectedSubCategory,
-        problem_description: description,
+        customer_id: Number(userId),
+        service_category_id: selectedCategory,
+        service_subcategory_id: selectedSubCategory,
+        description: description,
         problem_images: uploadedUrls,
-        service_location: address,
-        longitude: longitude ?? 0,
-        latitude: latitude ?? 0,
-        requested_date: selectedDate.toISOString().split('T')[0],
-        requested_timeslot: selectedSlot,
+        site_address: address,
+        site_longitude: longitude ?? 0,
+        site_latitude: latitude ?? 0,
+        scheduled_for: selectedDate.toISOString().split('T')[0],
+        scheduled_time_slot: selectedSlot,
+        execution_mode: executionMode,
       };
 
       console.log('Submitting payload:', JSON.stringify(payload, null, 2));

@@ -86,7 +86,7 @@ export default function Home() {
     try {
       const jobs = await serviceApi.getMyRequests();
       const active = jobs.find(
-        (j) => j.service_status !== 'Completed' && j.service_status !== 'On Hold'
+        (j) => j.status !== 'Completed' && j.status !== 'On Hold'
       ) ?? null;
       setActiveJob(active);
       setRecentJobs(jobs.slice(0, 5));
@@ -128,13 +128,13 @@ export default function Home() {
           <View style={styles.hero}>
             <Text style={styles.heroLabel}>{t('activeJob')}</Text>
             <Text style={styles.heroTitle}>
-              {activeJob.service_category} — {activeJob.problem_description?.slice(0, 30)}
+              {activeJob.service_category_id} — {activeJob.description?.slice(0, 30)}
             </Text>
             <View style={styles.heroRow}>
               <View style={styles.heroBadge}>
-                <Text style={styles.heroBadgeText}>{activeJob.service_status}</Text>
+                <Text style={styles.heroBadgeText}>{activeJob.status}</Text>
               </View>
-              {activeJob.service_status === 'Technician Assigned' && (
+              {activeJob.status === 'Technician Assigned' && (
                 <Text style={styles.heroEta}>{t('etaMinutes', { minutes: 12 })}</Text>
               )}
             </View>
@@ -215,15 +215,15 @@ export default function Home() {
               >
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, fontWeight: '500', color: Colors.text }}>
-                    {job.service_category} — {job.problem_description?.slice(0, 28)}
+                    {job.service_category_id} — {job.description?.slice(0, 28)}
                   </Text>
                   <Text style={{ fontSize: 11, color: Colors.text3, marginTop: 2 }}>
-                    {job.requested_date}
+                    {job.scheduled_for}
                   </Text>
                 </View>
                 <Badge
-                  label={job.service_status === 'Completed' ? t('statusCompleted') : job.service_status}
-                  variant={getStatusBadgeVariant(job.service_status)}
+                  label={job.status === 'Completed' ? t('statusCompleted') : job.status}
+                  variant={getStatusBadgeVariant(job.status)}
                 />
               </TouchableOpacity>
             ))

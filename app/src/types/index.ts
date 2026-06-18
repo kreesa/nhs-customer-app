@@ -44,12 +44,13 @@ export interface ServiceCategory {
   id: number;
   name: string;
   icon?: string;
+  execution_mode: string;
 }
 
 export interface ServiceSubCategory {
   id: number;
   name: string;
-  service_category_id: number;
+  service_category_id_id: number;
 }
 
 // ─── Service Request ─────────────────────────────────────────────────────────
@@ -63,16 +64,16 @@ export type ServiceStatus =
 export interface ServiceRequest {
   id: number;
   customer_id: number;
-  service_category: number;
-  service_subcategory: number;
-  problem_description: string;
+  service_category_id: number;
+  service_subcategory_id: number;
+  description: string;
   problem_images?: string[];
-  service_location: string;
-  longitude: number;
-  latitude: number;
-  requested_date: string;
-  requested_timeslot: string;
-  service_status: ServiceStatus;
+  site_address: string;
+  site_longitude: number;
+  site_latitude: number;
+  scheduled_for: string;
+  scheduled_time_slot: string;
+  status: ServiceStatus;
   technician_en_route: boolean;
   technician_arrival_onsite: boolean;
   need_assistance: boolean;
@@ -89,15 +90,15 @@ export interface ServiceRequest {
 }
 
 export interface ServiceRequestPayload {
-  service_category: number;
-  service_subcategory: number;
-  problem_description: string;
+  service_category_id: number;
+  service_subcategory_id: number;
+  description: string;
   problem_images?: string[];
-  service_location: string;
-  longitude: number;
-  latitude: number;
-  requested_date: string;
-  requested_timeslot: string;
+  site_address: string;
+  site_longitude: number;
+  site_latitude: number;
+  scheduled_for: string;
+  scheduled_time_slot: string;
 }
 
 // ─── Technician ───────────────────────────────────────────────────────────────

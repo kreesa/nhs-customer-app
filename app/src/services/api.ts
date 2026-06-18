@@ -157,7 +157,7 @@ export const categoryApi = {
 
 export const serviceApi = {
   createRequest: async (customerId: number, data: ServiceRequestPayload) => {
-    const res: any = await request(`/api/${customerId}/service-request`, {
+    const res: any = await request(`/api/jobs`, {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -165,12 +165,12 @@ export const serviceApi = {
   },
 
   getRequest: async (id: number) => {
-    const res: any = await request(`/api/service-request/${id}`);
+    const res: any = await request(`/api/jobs/${id}`);
     return res?.data ?? res;
   },
 
   getMyRequests: async () => {
-    const res: any = await request("/api/service-requests/my");
+    const res: any = await request("/api/jobs/my");
     return res?.data ?? res;
   },
 
