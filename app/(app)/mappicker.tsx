@@ -8,31 +8,73 @@ import * as Location from 'expo-location';
 import { router, useLocalSearchParams } from 'expo-router';
 import { mapPickerStore } from '../src/store/mapPickerStore';
 
-const DEFAULT = { latitude: 27.7172, longitude: 85.3240 }; // Kathmandu
-
 export default function MapPickerScreen() {
   const params = useLocalSearchParams<{
     initialLatitude?: string;
     initialLongitude?: string;
   }>();
 
-  const initLat = params.initialLatitude ? parseFloat(params.initialLatitude) : DEFAULT.latitude;
-  const initLng = params.initialLongitude ? parseFloat(params.initialLongitude) : DEFAULT.longitude;
+  const hasInitialParams = !!(params.initialLatitude && params.initialLongitude);
 
-  const [marker, setMarker] = useState({ latitude: initLat, longitude: initLng });
-  const [region, setRegion] = useState<Region>({
-    latitude: initLat,
-    longitude: initLng,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  });
+  const [marker, setMarker] = useState<{ latitude: number; longitude: number } | null>(
+    hasInitialParams
+      ? { latitude: parseFloat(params.initialLatitude!), longitude: parseFloat(params.initialLongitude!) }
+      : null
+  );
+  const [region, setRegion] = useState<Region | null>(
+    hasInitialParams
+      ? {
+          latitude: parseFloat(params.initialLatitude!),
+          longitude: parseFloat(params.initialLongitude!),
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }
+      : null
+  );
   const [address, setAddress] = useState('');
   const [locating, setLocating] = useState(false);
   const [reversing, setReversing] = useState(false);
+  const [initializing, setInitializing] = useState(!hasInitialParams);
+
+  // On mount — if no initial coords were passed, fetch device's current location
+  useEffect(() => {
+    if (!hasInitialParams) {
+      fetchCurrentLocation();
+    }
+  }, []);
 
   useEffect(() => {
-    reverseGeocode(marker.latitude, marker.longitude);
+    if (marker) {
+      reverseGeocode(marker.latitude, marker.longitude);
+    }
   }, [marker]);
+
+  const fetchCurrentLocation = async () => {
+    setInitializing(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission needed',
+          'Location permission is required to pin your current location. Please enable it or tap manually on the map.'
+        );
+        // Fall back to a neutral starting point only if permission denied
+        setMarker({ latitude: 27.7172, longitude: 85.3240 });
+        setRegion({ latitude: 27.7172, longitude: 85.3240, latitudeDelta: 0.01, longitudeDelta: 0.01 });
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      const { latitude, longitude } = loc.coords;
+      setMarker({ latitude, longitude });
+      setRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 });
+    } catch {
+      Alert.alert('Error', 'Could not get current location. Please tap on the map to pin manually.');
+    } finally {
+      setInitializing(false);
+    }
+  };
 
   const reverseGeocode = async (lat: number, lng: number) => {
     setReversing(true);
@@ -63,7 +105,7 @@ export default function MapPickerScreen() {
       });
       const { latitude, longitude } = loc.coords;
       setMarker({ latitude, longitude });
-      setRegion((r) => ({ ...r, latitude, longitude }));
+      setRegion((r) => r ? { ...r, latitude, longitude } : { latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 });
     } catch {
       Alert.alert('Error', 'Could not get location. Pin manually on the map.');
     } finally {
@@ -76,16 +118,27 @@ export default function MapPickerScreen() {
     setMarker({ latitude, longitude });
   };
 
-    const handleConfirm = () => {
+  const handleConfirm = () => {
+    if (!marker) return;
     const isCoordFallback = address.match(/^-?\d+\.\d+,\s*-?\d+\.\d+$/);
-    
+
     mapPickerStore.set({
-        latitude: marker.latitude,
-        longitude: marker.longitude,
-        address: isCoordFallback ? '' : address, // ← send empty string if it's just coords
+      latitude: marker.latitude,
+      longitude: marker.longitude,
+      address: isCoordFallback ? '' : address,
     });
     router.back();
-    };
+  };
+
+  // Show loading screen while fetching device location
+  if (initializing || !marker || !region) {
+    return (
+      <SafeAreaView style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#fff" />
+        <Text style={{ color: '#fff', marginTop: 12, fontSize: 14 }}>Getting your location...</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
