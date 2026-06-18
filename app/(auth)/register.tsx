@@ -9,9 +9,11 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { authApi } from "../src/services/api";
 
 export default function RegisterScreen() {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [profilePhoto, setProfilePhoto] = useState("");
@@ -21,9 +23,14 @@ export default function RegisterScreen() {
   const [securePassword, setSecurePassword] = useState(true);
   const [secureConfirm, setSecureConfirm] = useState(true);
 
-  const handleRegister = () => {
-    if (!name.trim()) {
-      Alert.alert("Name is required");
+  const handleRegister = async() => {
+    if (!firstName.trim()) {
+      Alert.alert("First Name is required");
+      return;
+    }
+
+    if (!lastName.trim()) {
+      Alert.alert("Last Name is required");
       return;
     }
 
@@ -48,18 +55,37 @@ export default function RegisterScreen() {
     }
 
     const payload = {
-      name,
+      first_name: firstName,
+      last_name: lastName,
       email,
       phone_number: phoneNumber,
-      profile_photo: profilePhoto,
+      // profile_photo: profilePhoto,
       password,
       password_confirmation: confirmPassword,
-      role: "customer",
+      device_name: "customer-app",
     };
 
-    console.log(payload);
+    console.log("Register Payload:", payload);
 
-    Alert.alert("Success", "Registration form is ready.");
+    try {
+      const response = await authApi.register(payload);
+
+      console.log("Register Response:", response);
+
+      Alert.alert("Success", "Registration successful");
+
+      // Example:
+      // navigation.navigate("Login");
+    } catch (error: any) {
+      console.error(error);
+
+      Alert.alert(
+        "Registration Failed",
+        error?.message || "Something went wrong"
+      );
+    }
+
+    
   };
 
   return (
@@ -70,10 +96,17 @@ export default function RegisterScreen() {
       <Text style={styles.title}>Register</Text>
 
       <TextInput
-        placeholder="Full Name"
+        placeholder="First Name"
         style={styles.input}
-        value={name}
-        onChangeText={setName}
+        value={firstName}
+        onChangeText={setFirstName}
+      />
+
+      <TextInput
+        placeholder="Last Name"
+        style={styles.input}
+        value={lastName}
+        onChangeText={setLastName}
       />
 
       <TextInput
