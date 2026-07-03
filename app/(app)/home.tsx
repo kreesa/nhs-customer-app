@@ -15,6 +15,7 @@ import { useAuth, AuthProvider } from '../src/context/AuthContext';
 import { useLanguage } from '../src/context/LanguageContext';
 import { categoryApi, serviceApi } from '../src/services/api';
 import { ServiceRequest } from '../src/types';
+import { LanguageToggle } from '../src/components/LanguageToggle';
 
 function getGreeting(): 'goodMorning' | 'goodAfternoon' | 'goodEvening' {
   const h = new Date().getHours();
@@ -113,6 +114,7 @@ export default function Home() {
           <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{t(getGreeting())}</Text>
           <Text style={CommonStyles.topbarTitle}>{user?.full_name ?? ''}</Text>
         </View>
+        <LanguageToggle />
         <TouchableOpacity onPress={handleNotification} style={{ position: 'relative' }}>
           <Text style={{ fontSize: 22, color: Colors.white }}>🔔</Text>
           <View style={styles.notifDot} />
