@@ -1,3 +1,4 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -9,13 +10,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { router, useLocalSearchParams, useRouter } from "expo-router";
 
 import { Colors, CommonStyles, Radius, Spacing } from '../src/components/theme';
 import { AppButton, Avatar, Badge, Card, InvoiceTotal, RowKV, Topbar } from '../src/components/ui';
 import { useLanguage } from '../src/context/LanguageContext';
 import { serviceApi } from '../src/services/api';
-import { PricingSummary, RootStackParamList, ServiceRequest, TrackingData } from '../types';
+import { PricingSummary, ServiceRequest, TrackingData } from '../types';
 
 const TIMELINE_STEPS = [
   { key: 'requestReceived', icon: '✓' },
@@ -34,7 +34,7 @@ function getStepStatus(job: ServiceRequest, index: number): 'done' | 'current' |
     'Completed': 4,
   };
   if (job.technician_en_route && index === 2) return 'current';
-  const currentStep = statusMap[job.service_status] ?? 0;
+  const currentStep = statusMap[job.status] ?? 0;
   if (index < currentStep) return 'done';
   if (index === currentStep) return 'current';
   return 'todo';
@@ -156,7 +156,6 @@ export default function Track() {
       <Topbar
         title={t('jobTracker')}
         onBack={() => router.back()}
-        right={<Badge label={job.service_status} variant="amber" />}
       />
 
       <ScrollView
@@ -164,8 +163,22 @@ export default function Track() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadJob(); }} tintColor={Colors.brand} />}
       >
-        {/* Map + Job Info */}
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
+        {/* General Job Detail */}
+        <Card label={t('Service Details')} >
+          <View style={{ padding: 14 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.text }}>Service ID #{servId}</Text>
+              <Badge label={job.status} variant="amber" />
+            </View>
+            <RowKV label={t('Scheduled Date')} value={job.scheduled_for} last />
+            <RowKV label={t('Scheduled Time Slot')} value={job.scheduled_time_slot} last />
+            <RowKV label={t('Estimated Amount')} value={job.original_estimated_amount} last />
+          </View>
+        </Card>
+
+        {/* Track Job in Progress */}
+        {(job.status === 'en_route' || job.status === 'arrived' || job.status === 'started' ) && (
+        <Card label={t('Live Tracker')} >
           <View style={styles.mapPh}>
             <Text style={{ fontSize: 36, marginBottom: 8 }}>📍</Text>
             {tracking ? (
@@ -184,15 +197,11 @@ export default function Track() {
             )}
           </View>
           <View style={{ padding: 14 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.text }}>Job #{servId}</Text>
-              <Badge label={job.service_status} variant="amber" />
-            </View>
-            <RowKV label={t('estimatedArrival')} value={tracking ? `${tracking.eta_minutes} ${t('minutes')}` : '—'} />
-            <RowKV label={t('distanceRemaining')} value={tracking ? `${tracking.distance_km} km` : '—'} />
-            <RowKV label={t('slot')} value={job.requested_timeslot} last />
+            <RowKV label={t('Estimated Arrival')} value={tracking ? `${tracking.eta_minutes} ${t('minutes')}` : '—'} />
+            <RowKV label={t('Distance Remaining')} value={tracking ? `${tracking.distance_km} km` : '—'} />
           </View>
         </Card>
+        )}
 
         {/* Technician Card */}
         {tech && (

@@ -14,7 +14,7 @@ import { Badge, Card } from '../src/components/ui';
 import { useAuth, AuthProvider } from '../src/context/AuthContext';
 import { useLanguage } from '../src/context/LanguageContext';
 import { categoryApi, serviceApi } from '../src/services/api';
-import { ServiceRequest } from '../types';
+import { ServiceRequest } from '../src/types';
 
 function getGreeting(): 'goodMorning' | 'goodAfternoon' | 'goodEvening' {
   const h = new Date().getHours();
@@ -86,7 +86,8 @@ export default function Home() {
     try {
       const jobs = await serviceApi.getMyRequests();
       const active = jobs.find(
-        (j) => j.status !== 'Completed' && j.status !== 'On Hold'
+        (j) => j.status !== 'cancelled' 
+        // && j.status !== 'On Hold'
       ) ?? null;
       setActiveJob(active);
       setRecentJobs(jobs.slice(0, 5));
@@ -128,7 +129,7 @@ export default function Home() {
           <View style={styles.hero}>
             <Text style={styles.heroLabel}>{t('activeJob')}</Text>
             <Text style={styles.heroTitle}>
-              {activeJob.service_category_id} — {activeJob.description?.slice(0, 30)}
+              {categories.find((cat) => cat.id === activeJob.service_category_id)?.name} Service — {activeJob.description?.slice(0, 30)}
             </Text>
             <View style={styles.heroRow}>
               <View style={styles.heroBadge}>
@@ -215,10 +216,10 @@ export default function Home() {
               >
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, fontWeight: '500', color: Colors.text }}>
-                    {job.service_category_id} — {job.description?.slice(0, 28)}
+                    {job.description?.slice(0, 28)}
                   </Text>
                   <Text style={{ fontSize: 11, color: Colors.text3, marginTop: 2 }}>
-                    {job.scheduled_for}
+                    {categories.find((cat) => cat.id === job.service_category_id)?.name} Service — { job.scheduled_for.split("T")[0]}
                   </Text>
                 </View>
                 <Badge
@@ -237,6 +238,13 @@ export default function Home() {
               icon: '👤', bg: Colors.brandBg, color: Colors.brand,
               title: t('myProfile'), sub: t('addressPreferences'),
               onPress: () => router.push("/profile"),
+            },
+            {
+              icon: '👨‍🔧', bg: Colors.amberBg, color: Colors.amber,
+              title: t('allServices'), sub: t('listAllServices'),
+              onPress: () => router.push({
+                pathname: "/serviceslist",
+              }),
             },
             {
               icon: '🧾', bg: Colors.greenBg, color: Colors.green,

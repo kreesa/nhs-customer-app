@@ -1,7 +1,14 @@
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router';
+import { View } from 'react-native';
+import BottomBar from './src/components/bottombar';
 
-export default function Layout() {
+export default function AppLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }} />
+    <View style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <Stack screenOptions={{ headerShown: false }} />
+      </View>
+      <BottomBar />
+    </View>
   );
 }

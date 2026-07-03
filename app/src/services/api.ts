@@ -170,7 +170,7 @@ export const serviceApi = {
   },
 
   getMyRequests: async () => {
-    const res: any = await request("/api/jobs/my");
+    const res: any = await request("/api/jobs");
     return res?.data ?? res;
   },
 
