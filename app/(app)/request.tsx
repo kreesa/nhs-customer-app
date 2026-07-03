@@ -56,6 +56,9 @@ export default function Request() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotsError, setSlotsError] = useState('');
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
 
@@ -126,6 +129,48 @@ export default function Request() {
     loadSubCategories();
   }, [selectedCategory]);
 
+
+ // Helper to format date as YYYY-MM-DD (avoid toISOString() timezone shift issues)
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  useEffect(() => {
+    const loadAvailableSlots = async () => {
+      if (!selectedCategory || !selectedSubCategory) {
+        setAvailableSlots([]);
+        return;
+      }
+
+      try {
+        setLoadingSlots(true);
+        setSlotsError('');
+        setSelectedSlot(null); // clear stale selection
+
+        const scheduledFor = formatDate(selectedDate);
+        const res = await serviceApi.getAvailableSlots(
+          selectedCategory,
+          selectedSubCategory,
+          scheduledFor
+        );
+
+        const list = Array.isArray(res) ? res : res?.data || [];
+        setAvailableSlots(list);
+      } catch (e) {
+        console.error('Failed to load slots:', e);
+        setSlotsError('Failed to load available slots');
+        setAvailableSlots([]);
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    loadAvailableSlots();
+  }, [selectedCategory, selectedSubCategory, selectedDate]);
+
   // map Picker
   useFocusEffect(
     useCallback(() => {
@@ -154,6 +199,7 @@ export default function Request() {
   );
   const executionMode = selectedCategoryData?.execution_mode;
 
+ 
   const handleSubmit = async () => {
     if (!selectedCategory) { Alert.alert('Error', 'Please select a service category.'); return; }
     if (!selectedSubCategory) { Alert.alert('Error', 'Please select a sub-category.'); return; }
@@ -483,19 +529,32 @@ export default function Request() {
           )}
 
           <Text style={[CommonStyles.fieldLabel, { marginBottom: 8 }]}>{t('timeSlot')}</Text>
-          <View style={styles.slotGrid}>
-            {TIME_SLOTS.map((slot) => (
-              <TouchableOpacity
-                key={slot}
-                style={[styles.slot, selectedSlot === slot && styles.slotSelected]}
-                onPress={() => setSelectedSlot(slot)}
-              >
-                <Text style={[styles.slotText, selectedSlot === slot && styles.slotTextSelected]}>
-                  {slot}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+
+          {!selectedSubCategory ? (
+            <Text style={{ color: Colors.text3, fontSize: 12 }}>
+              Select a sub-category first
+            </Text>
+          ) : loadingSlots ? (
+            <Text style={{ color: Colors.text3, fontSize: 12 }}>Loading available slots...</Text>
+          ) : slotsError ? (
+            <Text style={{ color: 'red', fontSize: 12 }}>{slotsError}</Text>
+          ) : availableSlots.length === 0 ? (
+            <Text style={{ color: Colors.text3, fontSize: 12 }}>No slots available for this date</Text>
+          ) : (
+            <View style={styles.slotGrid}>
+              {availableSlots.map((slot) => (
+                <TouchableOpacity
+                  key={slot}
+                  style={[styles.slot, selectedSlot === slot && styles.slotSelected]}
+                  onPress={() => setSelectedSlot(slot)}
+                >
+                  <Text style={[styles.slotText, selectedSlot === slot && styles.slotTextSelected]}>
+                    {slot}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </Card>
 
         <AppButton label={t('submitRequest')} onPress={handleSubmit} loading={loading} />

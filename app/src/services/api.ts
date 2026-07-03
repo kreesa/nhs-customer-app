@@ -164,6 +164,13 @@ export const serviceApi = {
     return res?.data ?? res;
   },
 
+  getAvailableSlots: async (categoryId: number, subCategoryId: number, scheduledFor: string) =>
+      request(
+        `/api/jobs/available-slots?category_id=${categoryId}&sub_category_id=${subCategoryId}&scheduled_for=${scheduledFor}`,
+        { method: 'GET' }
+      ),
+  
+
   getRequest: async (id: number) => {
     const res: any = await request(`/api/jobs/${id}`);
     return res?.data ?? res;
