@@ -2,7 +2,7 @@ import { Stack } from "expo-router";
 import { View } from "react-native";
 import { AuthProvider } from "./src/context/AuthContext";
 import { LanguageProvider } from "./src/context/LanguageContext";
-import BottomBar from "./src/components/bottombar";
+import BottomBar from "./src/components/BottomBar";
 
 export default function AppLayout() {
   return (
