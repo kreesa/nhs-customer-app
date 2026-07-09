@@ -30,10 +30,7 @@ export async function removeToken() {
  * @returns       - Parsed JSON response typed as T
  * @throws        - Error with server message or fallback HTTP status
 ──────────────────────────────────────────── */
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   // Retrieve stored auth token (null if not logged in)
   const token = await getToken();
 
@@ -68,7 +65,7 @@ async function request<T>(
 export async function login(
   email: string,
   password: string,
-  device_name: string
+  device_name: string,
 ) {
   const response = await fetch(`${BASE_URL}/api/auth/login`, {
     method: "POST",
@@ -115,11 +112,7 @@ export async function logout() {
 ──────────────────────────────────────────── */
 
 export const authApi = {
-  login: (payload: {
-    email: string;
-    password: string;
-    device_name?: string;
-  }) =>
+  login: (payload: { email: string; password: string; device_name?: string }) =>
     request("/api/auth/login", {
       method: "POST",
       body: JSON.stringify(payload),
@@ -136,11 +129,11 @@ export const authApi = {
    CUSTOMER / SERVICES
 ──────────────────────────────────────────── */
 
-export const customerApi = {
-  getProfile: () => request("/api/customer/profile"),
+export const profileApi = {
+  getProfile: () => request("/api/auth/me"),
 
   updateProfile: (data: any) =>
-    request("/api/customer/profile", {
+    request("/api/auth/me", {
       method: "PUT",
       body: JSON.stringify(data),
     }),
@@ -164,12 +157,15 @@ export const serviceApi = {
     return res?.data ?? res;
   },
 
-  getAvailableSlots: async (categoryId: number, subCategoryId: number, scheduledFor: string) =>
-      request(
-        `/api/jobs/available-slots?category_id=${categoryId}&sub_category_id=${subCategoryId}&scheduled_for=${scheduledFor}`,
-        { method: 'GET' }
-      ),
-  
+  getAvailableSlots: async (
+    categoryId: number,
+    subCategoryId: number,
+    scheduledFor: string,
+  ) =>
+    request(
+      `/api/jobs/available-slots?category_id=${categoryId}&sub_category_id=${subCategoryId}&scheduled_for=${scheduledFor}`,
+      { method: "GET" },
+    ),
 
   getRequest: async (id: number) => {
     const res: any = await request(`/api/jobs/${id}`);
@@ -182,7 +178,9 @@ export const serviceApi = {
   },
 
   trackTechnician: async (serviceId: number, technicianId: number) => {
-    const res: any = await request(`/api/${serviceId}/track-technician/${technicianId}`);
+    const res: any = await request(
+      `/api/${serviceId}/track-technician/${technicianId}`,
+    );
     return res?.data ?? res;
   },
 

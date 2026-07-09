@@ -39,6 +39,14 @@ export interface Customer {
   created_at?: string;
 }
 
+export interface Profile {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  phone_number: string;
+}
+
 // ─── Service Categories ───────────────────────────────────────────────────────
 export interface ServiceCategory {
   id: number;
