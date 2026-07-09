@@ -111,9 +111,10 @@ export default function RegisterScreen() {
           <Ionicons name="construct" size={28} color="#fff" />
         </View>
 
-        <Text style={styles.createAccount}>{t('createAccount')}</Text>
+        <Text style={styles.appName}>{t('appName')}</Text>
         <Text style={styles.welcomeSubtitle}>{t('tagline')}</Text>
         
+        <Text style={styles.createAccount}>{t('createAccount')}</Text>
 
         <View style={styles.card}>
           {/* Tabs */}
@@ -303,11 +304,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 
-  createAccount: {
+  appName: {
     fontSize: 24,
     fontWeight: "700",
-    color: COLORS.textDark,
+    color: COLORS.headerBg,
     marginBottom: 4,
+  },
+
+  createAccount: {
+    fontSize: 18,
+    color: COLORS.textDark,
+    marginBottom: 24,
   },
 
   welcomeSubtitle: {

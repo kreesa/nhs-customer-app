@@ -83,10 +83,14 @@ export default function LoginScreen() {
           <Ionicons name="construct" size={28} color="#fff" />
         </View>
 
-        <Text style={styles.welcomeTitle}>{t('welcomeBack')}</Text>
+        <Text style={styles.appName}>{t('appName')}</Text>
+
         <Text style={styles.welcomeSubtitle}>{t('tagline')}</Text>
 
+        <Text style={styles.welcomeTitle}>{t('welcomeBack')}</Text>
+
         <View style={styles.card}>
+
           {/* Tabs */}
           <View style={styles.tabRow}>
             <View style={[styles.tab, styles.tabActive]}>
@@ -216,16 +220,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 
-  welcomeTitle: {
+  appName: {
     fontSize: 24,
     fontWeight: "700",
-    color: COLORS.textDark,
+    color: COLORS.headerBg,
     marginBottom: 4,
   },
 
   welcomeSubtitle: {
     fontSize: 14,
     color: COLORS.textMuted,
+    marginBottom: 24,
+  },
+
+  welcomeTitle: {
+    fontSize: 18,
+    color: COLORS.textDark,
     marginBottom: 24,
   },
 

@@ -7,6 +7,7 @@ export const translations = {
     // App
     appName: 'Nepal Home Service',
     tagline: 'Your home, maintained on demand',
+    customerApp: 'Customer App',
 
     // Auth
     welcomeBack: 'Welcome back',
@@ -176,9 +177,10 @@ export const translations = {
     // App
     appName: 'नेपाल होम सर्भिस',
     tagline: 'माग अनुसार, घरको हेरचाह',
+    customerApp: 'ग्राहक एप',
 
     // Auth
-    welcomeBack: 'फिर्ता स्वागत छ',
+    welcomeBack: 'स्वागत छ',
     signIn: 'साइन इन',
     register: 'दर्ता गर्नुहोस्',
     email: 'इमेल ठेगाना',

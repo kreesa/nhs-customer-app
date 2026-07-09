@@ -23,8 +23,8 @@ export function AppHeader() {
   return (
     <View style={{ paddingTop: insets.top, backgroundColor: Colors.brandDark }}>
       <Topbar
-        subtitle={isLoggedIn ? t(getGreeting()) : t('tagline')}
-        title={isLoggedIn ? (user?.full_name ?? "") : t("appName")}
+        subtitle={isLoggedIn ? t(getGreeting()) : t('appName')}
+        title={isLoggedIn ? (user?.full_name ?? "") : t("customerApp")}
         right={
           <View style={styles.rightRow}>
             <LanguageToggle />
