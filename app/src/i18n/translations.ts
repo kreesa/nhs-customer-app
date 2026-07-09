@@ -45,6 +45,8 @@ export const translations = {
     quickActions: 'Quick actions',
     myProfile: 'My profile',
     addressPreferences: 'Address, preferences',
+    allServices: 'All Services',
+    listAllServices: 'List all Services',
     invoicesPayments: 'Invoices & payments',
     viewTransactions: 'View all transactions',
 
@@ -215,6 +217,8 @@ export const translations = {
     quickActions: 'छिटो कार्यहरू',
     myProfile: 'मेरो प्रोफाइल',
     addressPreferences: 'ठेगाना, प्राथमिकताहरू',
+    allServices: 'सबै सेवाहरू',
+    listAllServices: 'सबै सेवाहरू हेर्नुहोस्',
     invoicesPayments: 'बिल र भुक्तानी',
     viewTransactions: 'सबै लेनदेन हेर्नुहोस्',
 

@@ -224,9 +224,7 @@ export default function Home() {
             {
               icon: '👨‍🔧', bg: Colors.amberBg, color: Colors.amber,
               title: t('allServices'), sub: t('listAllServices'),
-              onPress: () => router.push({
-                pathname: "/serviceslist",
-              }),
+              onPress: () => router.push("/serviceslist"),
             },
             {
               icon: '🧾', bg: Colors.greenBg, color: Colors.green,
