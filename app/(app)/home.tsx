@@ -15,14 +15,7 @@ import { useAuth, AuthProvider } from '../src/context/AuthContext';
 import { useLanguage } from '../src/context/LanguageContext';
 import { categoryApi, serviceApi } from '../src/services/api';
 import { ServiceRequest } from '../src/types';
-import { LanguageToggle } from '../src/components/LanguageToggle';
-
-function getGreeting(): 'goodMorning' | 'goodAfternoon' | 'goodEvening' {
-  const h = new Date().getHours();
-  if (h < 12) return 'goodMorning';
-  if (h < 17) return 'goodAfternoon';
-  return 'goodEvening';
-}
+import { AppHeader } from "../src/components/AppHeader";
 
 function getStatusBadgeVariant(status: string) {
   switch (status) {
@@ -108,18 +101,8 @@ export default function Home() {
 
   return (
     <View style={CommonStyles.screen}>
-      {/* Topbar */}
-      <View style={[CommonStyles.topbar, { height: 60 }]}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{t(getGreeting())}</Text>
-          <Text style={CommonStyles.topbarTitle}>{user?.full_name ?? ''}</Text>
-        </View>
-        <LanguageToggle />
-        <TouchableOpacity onPress={handleNotification} style={{ position: 'relative' }}>
-          <Text style={{ fontSize: 22, color: Colors.white }}>🔔</Text>
-          <View style={styles.notifDot} />
-        </TouchableOpacity>
-      </View>
+      {/* AppHeader */}
+      <AppHeader />
 
       <ScrollView
         contentContainerStyle={styles.scroll}

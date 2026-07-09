@@ -5,7 +5,7 @@ export type Language = 'en' | 'ne';
 export const translations = {
   en: {
     // App
-    appName: 'NepalHomeService',
+    appName: 'Nepal Home Service',
     tagline: 'Your home, maintained on demand',
 
     // Auth
@@ -17,6 +17,8 @@ export const translations = {
     confirmPassword: 'Confirm password',
     forgotPassword: 'Forgot password?',
     fullName: 'Full name',
+    firstName: 'First Name',
+    lastName: 'Last Name',
     phone: 'Phone number',
     serviceAddress: 'Service address',
     createAccount: 'Create account',
@@ -184,6 +186,8 @@ export const translations = {
     confirmPassword: 'पासवर्ड पुष्टि गर्नुहोस्',
     forgotPassword: 'पासवर्ड बिर्सनुभयो?',
     fullName: 'पूरा नाम',
+    firstName: 'नाम',
+    lastName: 'उपनाम',
     phone: 'फोन नम्बर',
     serviceAddress: 'सेवा ठेगाना',
     createAccount: 'खाता बनाउनुहोस्',

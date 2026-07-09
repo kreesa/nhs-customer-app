@@ -1,46 +1,24 @@
-import { View, Text, TouchableOpacity } from "react-native";
-import { router } from "expo-router";
+import { View, SafeAreaView, StyleSheet } from "react-native";
+import { Redirect } from "expo-router";
+import { useAuth } from "./src/context/AuthContext";
+import { AppHeader } from "./src/components/AppHeader";
 
-export default function HomeScreen() {
+export default function Index() {
+  const { isLoggedIn } = useAuth();
+
+  if (!isLoggedIn) {
+    return <Redirect href="/login" />;
+  }
+
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 20,
-      }}
-    >
-      <Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 30 }}>
-        Welcome Customer
-      </Text>
-
-      <TouchableOpacity
-        onPress={() => router.push("/login")}
-        style={{
-          backgroundColor: "#007AFF",
-          padding: 15,
-          borderRadius: 8,
-          width: "100%",
-          marginBottom: 15,
-        }}
-      >
-        <Text style={{ color: "#fff", textAlign: "center", fontWeight: "bold" }}>
-          Login
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.push("/register")}>
-        <Text
-          style={{
-            color: "#007AFF",
-            fontSize: 16,
-            textDecorationLine: "underline",
-          }}
-        >
-          New customer? Register here
-        </Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <AppHeader />
+      <View style={styles.content} />
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: "#1B4F72" },
+  content: { flex: 1, backgroundColor: "#EFEDE7" },
+});
