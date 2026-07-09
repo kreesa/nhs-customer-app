@@ -65,7 +65,7 @@ export interface ServiceRequest {
   id: number;
   customer_id: number;
   service_category_id: number;
-  service_subcategory_id: number;
+  service_sub_category_id: number;
   description: string;
   problem_images?: string[];
   site_address: string;
@@ -91,7 +91,7 @@ export interface ServiceRequest {
 
 export interface ServiceRequestPayload {
   service_category_id: number;
-  service_subcategory_id: number;
+  service_sub_category_id: number;
   description: string;
   problem_images?: string[];
   site_address: string;

@@ -231,7 +231,7 @@ export default function Request() {
       const payload = {
         customer_id: Number(userId),
         service_category_id: selectedCategory,
-        service_subcategory_id: selectedSubCategory,
+        service_sub_category_id: selectedSubCategory,
         description: description,
         problem_images: uploadedUrls,
         site_address: address,
