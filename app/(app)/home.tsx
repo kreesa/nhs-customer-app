@@ -15,7 +15,6 @@ import { useAuth, AuthProvider } from '../src/context/AuthContext';
 import { useLanguage } from '../src/context/LanguageContext';
 import { categoryApi, serviceApi } from '../src/services/api';
 import { ServiceRequest } from '../src/types';
-import { AppHeader } from "../src/components/AppHeader";
 
 function getStatusBadgeVariant(status: string) {
   switch (status) {
@@ -101,8 +100,6 @@ export default function Home() {
 
   return (
     <View style={CommonStyles.screen}>
-      {/* AppHeader */}
-      <AppHeader />
 
       <ScrollView
         contentContainerStyle={styles.scroll}

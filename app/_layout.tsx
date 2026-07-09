@@ -1,28 +1,28 @@
-import { Stack } from "expo-router";
-import { View } from "react-native";
-import { AuthProvider } from "./src/context/AuthContext";
-import { LanguageProvider } from "./src/context/LanguageContext";
-import BottomBar from "./src/components/BottomBar";
+import { Stack } from 'expo-router';
+import { View, StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { LanguageProvider } from './src/context/LanguageContext';
+import { AuthProvider } from './src/context/AuthContext';
+import { AppHeader } from './src/components/AppHeader';
 
-export default function AppLayout() {
+export default function RootLayout() {
   return (
-    <LanguageProvider>
-    <AuthProvider>
-      <View style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-
-              // display language toggle in header
-              // title: 'NHS Customer App',
-              // headerRight: () => <LanguageToggle />,
-            }}
-          />
-        </View>
-        <BottomBar />
-      </View>
-    </AuthProvider>
-    </LanguageProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <LanguageProvider>
+          <View style={styles.container}>
+            <AppHeader />
+            <View style={styles.content}>
+              <Stack screenOptions={{ headerShown: false }} />
+            </View>
+          </View>
+        </LanguageProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  content: { flex: 1 },
+});

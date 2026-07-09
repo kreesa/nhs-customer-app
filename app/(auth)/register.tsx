@@ -16,8 +16,6 @@ import { useAuth } from '../src/context/AuthContext';
 import { useLanguage } from "../src/context/LanguageContext";
 import { Colors } from '../src/components/theme';
 
-import { AppHeader } from "../src/components/AppHeader";
-
 export default function RegisterScreen() {
   const { language, setLanguage } = useLanguage();
   const { user } = useAuth();
@@ -104,8 +102,6 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.root}>
-      {/* AppHeader */}
-      <AppHeader />
 
       <ScrollView
         contentContainerStyle={styles.container}

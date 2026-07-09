@@ -17,7 +17,6 @@ import { login, saveToken } from "../src/services/api";
 import { getDeviceName } from "../src/services/device";
 import { useAuth } from '../src/context/AuthContext';
 import { useLanguage } from "../src/context/LanguageContext";
-import { AppHeader } from "../src/components/AppHeader";
 import { Colors } from '../src/components/theme';
 
 export default function LoginScreen() {
@@ -78,8 +77,6 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.root}>
-      {/* AppHeader */}
-      <AppHeader />
 
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.iconCircle}>

@@ -1,7 +1,6 @@
 import { View, SafeAreaView, StyleSheet } from "react-native";
 import { Redirect } from "expo-router";
 import { useAuth } from "./src/context/AuthContext";
-import { AppHeader } from "./src/components/AppHeader";
 
 export default function Index() {
   const { isLoggedIn } = useAuth();
@@ -12,7 +11,7 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <AppHeader />
+      
       <View style={styles.content} />
     </SafeAreaView>
   );
