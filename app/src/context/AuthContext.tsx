@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Customer } from '../types';
+import { router } from "expo-router";
 
 interface AuthContextType {
   user: Customer | null;
@@ -60,10 +61,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+     console.log("Signing out...");
     await AsyncStorage.removeItem('auth_token');
     await AsyncStorage.removeItem('auth_user');
     setToken(null);
     setUser(null);
+    router.replace("/");
   };
 
   return (

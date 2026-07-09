@@ -1,11 +1,13 @@
 import { Stack } from "expo-router";
 import { View } from "react-native";
-import { LanguageProvider } from "./src//context/LanguageContext";
+import { AuthProvider } from "./src/context/AuthContext";
+import { LanguageProvider } from "./src/context/LanguageContext";
 import BottomBar from "./src/components/bottombar";
 
 export default function AppLayout() {
   return (
     <LanguageProvider>
+    <AuthProvider>
       <View style={{ flex: 1 }}>
         <View style={{ flex: 1 }}>
           <Stack
@@ -20,6 +22,7 @@ export default function AppLayout() {
         </View>
         <BottomBar />
       </View>
+    </AuthProvider>
     </LanguageProvider>
   );
 }
