@@ -44,7 +44,7 @@ export default function ProfileScreen() {
   }, []);
 
   const handleSignOut = () => {
-    Alert.alert(t("signOut"), "Are you sure?", [
+    Alert.alert(t("signOut"), t("areYouSure"), [
       { text: t("cancel"), style: "cancel" },
       {
         text: t("signOut"),

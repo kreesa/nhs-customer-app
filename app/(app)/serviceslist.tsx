@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useLanguage } from '../src/context/LanguageContext';
 import { categoryApi, serviceApi } from "../src/services/api";
 import { ServiceRequest, ServiceCategory, ServiceSubCategory } from "../src/types";
 import { AppButton, Badge } from "../src/components/ui";
@@ -24,15 +25,6 @@ import {
 } from "../src/utils/serviceStatus";
 
 type SortOption = "latest" | "oldest";
-
-// "all" plus every timeline-step grouping (Request Received, Technician
-// Assigned, En Route, Work in Progress, Work Completed, Payment Made,
-// Cancelled) — matches the groupings used on the tracker page, instead of
-// raw/fictional status values.
-const STATUS_OPTIONS = [
-  { key: "all", label: "All statuses" },
-  ...STATUS_FILTER_OPTIONS,
-];
 
 
 // Generic single-select field styled like a form input. Opens a modal list on tap.
@@ -47,6 +39,7 @@ function SelectField<T extends string>({
   options: { key: T; label: string }[];
   onChange: (val: T) => void;
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const selectedLabel = options.find((o) => o.key === value)?.label ?? "Select";
 
@@ -100,11 +93,13 @@ function SortToggleButton({
   sortBy: SortOption;
   onToggle: () => void;
 }) {
+  const { t } = useLanguage();
+
   return (
     <View style={styles.sortToggleWrap}>
-      <Text style={styles.selectLabel}>Sort</Text>
+      <Text style={styles.selectLabel}>{t('sort')}</Text>
       <TouchableOpacity style={styles.sortToggleBtn} onPress={onToggle} activeOpacity={0.7}>
-        <Text style={styles.sortToggleText}>{sortBy === "latest" ? "Latest" : "Oldest"}</Text>
+        <Text style={styles.sortToggleText}>{sortBy === "latest" ? t('latest') : t('oldest') }</Text>
         <Text style={styles.sortToggleArrow}>{sortBy === "latest" ? "↓" : "↑"}</Text>
       </TouchableOpacity>
     </View>
@@ -112,6 +107,7 @@ function SortToggleButton({
 }
 
 export default function ServicesScreen() {
+  const { t } = useLanguage();
   const [services, setServices] = useState<ServiceRequest[]>([]);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [subCategoriesByCategoryId, setSubCategoriesByCategoryId] = useState<
@@ -129,6 +125,26 @@ export default function ServicesScreen() {
 
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
+
+  // "all" plus every timeline-step grouping (Request Received, Technician
+  // Assigned, En Route, Work in Progress, Work Completed, Payment Made,
+  // Cancelled) — matches the groupings used on the tracker page, instead of
+  // raw/fictional status values.
+  const STATUS_OPTIONS = [
+    { key: "all", label: t('all') },
+    ...STATUS_FILTER_OPTIONS,
+  ];
+
+  const categoryOptions = useMemo(
+    () => [
+      { key: "all", label: t('all') },
+      ...categories.map((cat) => ({
+        key: String(cat.id),
+        label: cat.name,
+      })),
+    ],
+    [categories]
+  );
 
   const formatDate = (date: Date | null) => {
     if (!date) return "";
@@ -167,7 +183,7 @@ export default function ServicesScreen() {
       setCategories(categoriesRes);
       setSubCategoriesByCategoryId(subCategoryMap);
     } catch (err: any) {
-      setError(err?.message ?? "Failed to load services");
+      setError(err?.message ?? t('failedToLoadService'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -201,17 +217,6 @@ export default function ServicesScreen() {
     });
     return map;
   }, [subCategoriesByCategoryId]);
-
-  const categoryOptions = useMemo(
-    () => [
-      { key: "all", label: "All Categories" },
-      ...categories.map((cat) => ({
-        key: String(cat.id),
-        label: cat.name,
-      })),
-    ],
-    [categories]
-  );
 
   const filteredAndSortedServices = useMemo(() => {
     const fromTime = dateFrom?.getTime() ?? null;
@@ -249,7 +254,7 @@ export default function ServicesScreen() {
   }, [services, categoryFilter, statusFilter, sortBy, dateFrom, dateTo]);
 
   const renderItem = ({ item }: { item: ServiceRequest }) => {
-    const categoryName = categoryNameById[item.service_category_id] ?? "Service";
+    const categoryName = categoryNameById[item.service_category_id] ?? t('service');
     const subCategoryId = (item as any).sub_category_id ?? (item as any).service_sub_category_id;
     const subCategoryName = subCategoryId ? subCategoryNameById[subCategoryId] : undefined;
 
@@ -296,7 +301,7 @@ export default function ServicesScreen() {
         </View>
 
         <TouchableOpacity>
-          <AppButton label={'viewDetails'} onPress={() =>
+          <AppButton label={t('viewDetails')} onPress={() =>
             router.push({
               pathname: "/track",
               params: { serviceId: item.id },
@@ -317,13 +322,13 @@ export default function ServicesScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.pageTitle}>My Services</Text>
+      <Text style={styles.pageTitle}>{t('myServices')}</Text>
 
       {error && (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity onPress={loadData}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t('retry')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -331,14 +336,14 @@ export default function ServicesScreen() {
       {/* Category + Service Timeline + Sort toggle, all in one row */}
       <View style={styles.selectRow}>
         <SelectField
-          label="Category"
+          label={t('serviceCategory')}
           value={categoryFilter}
           options={categoryOptions}
           onChange={setCategoryFilter}
         />
 
         <SelectField
-          label="Service Timeline"
+          label={t('statusTimeline')}
           value={statusFilter}
           options={STATUS_OPTIONS}
           onChange={setStatusFilter}
@@ -353,16 +358,16 @@ export default function ServicesScreen() {
       {/* Date range filter */}
       <View style={styles.dateRow}>
         <View style={styles.dateInputWrap}>
-          <Text style={styles.dateLabel}>Scheduled From</Text>
+          <Text style={styles.dateLabel}>{t('scheduledFrom')}</Text>
           <TouchableOpacity style={styles.dateInput} onPress={() => setShowFromPicker(true)}>
-            <Text>{dateFrom ? formatDate(dateFrom) : "Select Date"}</Text>
+            <Text>{dateFrom ? formatDate(dateFrom) : t('selectDate')}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.dateInputWrap}>
-          <Text style={styles.dateLabel}>Scheduled To</Text>
+          <Text style={styles.dateLabel}>{t('scheduledTo')}</Text>
           <TouchableOpacity style={styles.dateInput} onPress={() => setShowToPicker(true)}>
-            <Text>{dateTo ? formatDate(dateTo) : "Select Date"}</Text>
+            <Text>{dateTo ? formatDate(dateTo) : t('selectDate')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -374,7 +379,7 @@ export default function ServicesScreen() {
               setDateTo(null);
             }}
           >
-            <Text style={styles.clearDatesText}>Clear</Text>
+            <Text style={styles.clearDatesText}>{t('clear')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -389,10 +394,8 @@ export default function ServicesScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>📭</Text>
-            <Text style={styles.emptyTitle}>No services found</Text>
-            <Text style={styles.emptyText}>
-              Try changing filters or create a new service request.
-            </Text>
+            <Text style={styles.emptyTitle}>{t('noServiceFound')}</Text>
+            <Text style={styles.emptyText}>{t('noServiceTextMessage')}</Text>
           </View>
         }
       />

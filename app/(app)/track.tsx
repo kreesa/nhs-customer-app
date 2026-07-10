@@ -136,13 +136,13 @@ export default function Track() {
   };
 
   const handleDecline = async () => {
-    Alert.alert(t('decline'), 'Are you sure you want to decline the quotation?', [
+    Alert.alert(t('decline'), t('declineConfirmationMessage'), [
       { text: t('cancel'), style: 'cancel' },
       {
         text: t('decline'), style: 'destructive',
         onPress: async () => {
           await serviceApi.declineQuotation(servId);
-          Alert.alert('Declined', 'Technician has been notified.');
+          Alert.alert(t('declined'), t('technicianHasBeenNotified'));
           router.back();
         },
       },
@@ -196,21 +196,21 @@ export default function Track() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadJob(); }} tintColor={Colors.brand} />}
       >
         {/* General Job Detail */}
-        <Card label={t('Service Details')} >
+        <Card label={t('serviceDetails')} >
           <View style={{ padding: 14 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.text }}>Service ID #{servId}</Text>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.text }}>{t('serviceRequestNo')} {servId}</Text>
               <Badge label={getStatusLabel(job.status)} variant={getStatusBadgeColor(job.status)} />
             </View>
-            <RowKV label={t('Scheduled Date')} value={job.scheduled_for?.split('T')[0] ?? '—'} last />
-            <RowKV label={t('Scheduled Time Slot')} value={job.scheduled_time_slot} last />
-            <RowKV label={t('Estimated Amount')} value={job.original_estimated_amount} last />
+            <RowKV label={t('scheduledDate')} value={job.scheduled_for?.split('T')[0] ?? '—'} last />
+            <RowKV label={t('scheduledTimeSlot')} value={job.scheduled_time_slot} last />
+            <RowKV label={t('estimatedAmount')} value={job.original_estimated_amount} last />
           </View>
         </Card>
 
         {/* Track Job in Progress */}
         {(job.status === 'en_route' || job.status === 'arrived' || job.status === 'started') && (
-        <Card label={t('Live Tracker')} >
+        <Card label={t('liveTracker')} >
           <View style={styles.mapPh}>
             <Text style={{ fontSize: 36, marginBottom: 8 }}>📍</Text>
             {tracking ? (
