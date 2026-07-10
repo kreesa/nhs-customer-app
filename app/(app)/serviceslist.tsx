@@ -16,7 +16,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLanguage } from '../src/context/LanguageContext';
 import { categoryApi, serviceApi } from "../src/services/api";
 import { ServiceRequest, ServiceCategory } from "../src/types";
-import { AppButton, Badge } from "../src/components/ui";
+import { AppButton, PageHeader, Badge } from "../src/components/ui";
 import {
   getStatusLabel,
   getStatusBadgeColor,
@@ -287,8 +287,8 @@ export default function ServicesScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.pageTitle}>{t('myServices')}</Text>
-
+      <PageHeader title={t("myServices")} onBack={() => router.back()} />
+      
       {error && (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText}>{error}</Text>

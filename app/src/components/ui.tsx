@@ -219,6 +219,45 @@ export const Topbar = ({ title, subtitle, onBack, right }: TopbarProps) => (
   </View>
 );
 
+// ─── PageHeader ───────────────────────────────────────────────────────────────────
+interface PageHeaderProps {
+  title: string;
+  subtitle?: string;
+  onBack?: () => void;
+  right?: React.ReactNode;
+}
+
+export const PageHeader = ({
+  title,
+  subtitle,
+  onBack,
+  right,
+}: PageHeaderProps) => (
+  <View style={styles.pageHeader}>
+    <View style={styles.pageHeaderLeft}>
+      {onBack && (
+        <TouchableOpacity
+          style={styles.pageBackBtn}
+          onPress={onBack}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.pageBackIcon}>‹</Text>
+        </TouchableOpacity>
+      )}
+
+      <View style={styles.pageTitleWrap}>
+        {subtitle ? (
+          <Text style={styles.pageSubtitle}>{subtitle}</Text>
+        ) : null}
+
+        <Text style={styles.pageTitle}>{title}</Text>
+      </View>
+    </View>
+
+    {right}
+  </View>
+);
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   badge: {
@@ -266,5 +305,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 4,
+  },
+
+  // PageHeader
+  pageHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+
+  pageHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  pageBackBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 6,
+  },
+
+  pageBackIcon: {
+    fontSize: 26,
+    color: Colors.text,
+    lineHeight: 24,
+    fontWeight: "600",
+  },
+
+  pageTitleWrap: {
+    flex: 1,
+  },
+
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: Colors.text,
+  },
+
+  pageSubtitle: {
+    fontSize: 10,
+    color: Colors.text3,
+    marginBottom: 1,
   },
 });

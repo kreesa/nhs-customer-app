@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { Colors, CommonStyles, Spacing } from "../src/components/theme";
-import { AppButton, Card, Topbar } from "../src/components/ui";
+import { AppButton, PageHeader, Card } from "../src/components/ui";
 import { useAuth } from "../src/context/AuthContext";
 import { useLanguage } from "../src/context/LanguageContext";
 import { profileApi } from "../src/services/api";
@@ -49,7 +49,7 @@ export default function ProfileScreen() {
       {
         text: t("signOut"),
         style: "destructive",
-        onPress : () => {
+        onPress: () => {
           signOut();
         },
       },
@@ -67,7 +67,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={CommonStyles.screen}>
-      <Topbar title={t("myProfileTitle")} onBack={() => router.back()} />
+      <PageHeader title={t("myProfileTitle")} onBack={() => router.back()} />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -114,7 +114,6 @@ export default function ProfileScreen() {
               keyboardType="phone-pad"
             />
           </View>
-
         </Card>
 
         <AppButton
