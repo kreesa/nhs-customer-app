@@ -15,16 +15,8 @@ import { useAuth, AuthProvider } from '../src/context/AuthContext';
 import { useLanguage } from '../src/context/LanguageContext';
 import { categoryApi, serviceApi } from '../src/services/api';
 import { ServiceRequest } from '../src/types';
+import { getStatusLabel, getStatusBadgeColor } from "../src/utils/serviceStatus";
 
-function getStatusBadgeVariant(status: string) {
-  switch (status) {
-    case 'Completed': return 'green';
-    case 'Technician Assigned': return 'blue';
-    case 'Work In Progress': return 'blue';
-    case 'On Hold': return 'gray';
-    default: return 'amber';
-  }
-}
 
 export default function Home() {
   const { user } = useAuth();
@@ -190,7 +182,7 @@ export default function Home() {
               <TouchableOpacity
                 key={job.id}
                 style={[styles.histItem, i === recentJobs.length - 1 && { borderBottomWidth: 0 }]}
-                onPress={() =>  router.push({
+                onPress={() => router.push({
                   pathname: "/track",
                   params: { serviceId: job.id },
                 })}
@@ -201,13 +193,11 @@ export default function Home() {
                     {job.description?.slice(0, 28)}
                   </Text>
                   <Text style={{ fontSize: 11, color: Colors.text3, marginTop: 2 }}>
-                    {categories.find((cat) => cat.id === job.service_category_id)?.name} Service — { job.scheduled_for.split("T")[0]}
+                    {categories.find((cat) => cat.id === job.service_category_id)?.name} Service — {job.scheduled_for.split("T")[0]}
                   </Text>
                 </View>
-                <Badge
-                  label={job.status === 'Completed' ? t('statusCompleted') : job.status}
-                  variant={getStatusBadgeVariant(job.status)}
-                />
+
+                <Badge label={getStatusLabel(job.status)} variant={getStatusBadgeColor(job.status)} />
               </TouchableOpacity>
             ))
           )}

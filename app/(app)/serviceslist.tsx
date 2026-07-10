@@ -5,62 +5,35 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  TextInput,
   ActivityIndicator,
   RefreshControl,
   Modal,
   Pressable,
+  Platform,
 } from "react-native";
 import { router } from "expo-router";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { categoryApi, serviceApi } from "../src/services/api";
 import { ServiceRequest, ServiceCategory, ServiceSubCategory } from "../src/types";
-import { Badge } from "../src/components/ui";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { Platform } from "react-native";
+import { AppButton, Badge } from "../src/components/ui";
+import {
+  getStatusLabel,
+  getStatusBadgeColor,
+  matchesStatusFilter,
+  STATUS_FILTER_OPTIONS,
+} from "../src/utils/serviceStatus";
 
-type SortOption = "newest" | "oldest" | "scheduled_asc" | "scheduled_desc";
+type SortOption = "latest" | "oldest";
 
+// "all" plus every timeline-step grouping (Request Received, Technician
+// Assigned, En Route, Work in Progress, Work Completed, Payment Made,
+// Cancelled) — matches the groupings used on the tracker page, instead of
+// raw/fictional status values.
 const STATUS_OPTIONS = [
   { key: "all", label: "All statuses" },
-  { key: "pending", label: "Pending" },
-  { key: "assigned", label: "Assigned" },
-  { key: "en_route", label: "En route" },
-  { key: "hold", label: "Hold" },
-  { key: "completed", label: "Completed" },
-  { key: "cancelled", label: "Cancelled" },
+  ...STATUS_FILTER_OPTIONS,
 ];
 
-const SORT_OPTIONS: { key: SortOption; label: string }[] = [
-  { key: "newest", label: "Newest first" },
-  { key: "oldest", label: "Oldest first" },
-  { key: "scheduled_asc", label: "Scheduled (earliest first)" },
-  { key: "scheduled_desc", label: "Scheduled (latest first)" },
-];
-
-function getStatusBadgeVariant(
-  status: string
-): "success" | "warning" | "danger" | "info" | "default" {
-  switch (status?.toLowerCase()) {
-    case "completed":
-      return "success";
-    case "pending":
-    case "hold":
-      return "warning";
-    case "cancelled":
-      return "danger";
-    case "assigned":
-    case "en_route":
-      return "info";
-    default:
-      return "default";
-  }
-}
-
-// Basic YYYY-MM-DD validator so bad input doesn't silently break filtering
-function isValidDateString(value: string) {
-  if (!value) return false;
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !isNaN(new Date(value).getTime());
-}
 
 // Generic single-select field styled like a form input. Opens a modal list on tap.
 function SelectField<T extends string>({
@@ -118,6 +91,26 @@ function SelectField<T extends string>({
   );
 }
 
+// Compact toggle button (not a dropdown) for the two sort directions —
+// both based on job.scheduled_for. Tapping flips latest <-> oldest.
+function SortToggleButton({
+  sortBy,
+  onToggle,
+}: {
+  sortBy: SortOption;
+  onToggle: () => void;
+}) {
+  return (
+    <View style={styles.sortToggleWrap}>
+      <Text style={styles.selectLabel}>Sort</Text>
+      <TouchableOpacity style={styles.sortToggleBtn} onPress={onToggle} activeOpacity={0.7}>
+        <Text style={styles.sortToggleText}>{sortBy === "latest" ? "Latest" : "Oldest"}</Text>
+        <Text style={styles.sortToggleArrow}>{sortBy === "latest" ? "↓" : "↑"}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function ServicesScreen() {
   const [services, setServices] = useState<ServiceRequest[]>([]);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
@@ -130,7 +123,7 @@ export default function ServicesScreen() {
 
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [sortBy, setSortBy] = useState<SortOption>("latest");
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
 
@@ -139,11 +132,9 @@ export default function ServicesScreen() {
 
   const formatDate = (date: Date | null) => {
     if (!date) return "";
-
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
     const d = String(date.getDate()).padStart(2, "0");
-
     return `${y}-${m}-${d}`;
   };
 
@@ -151,17 +142,20 @@ export default function ServicesScreen() {
     try {
       setError(null);
       const servicesRes: ServiceRequest[] = (await serviceApi.getMyRequests()) ?? [];
-      // console.log('service request', servicesRes);
-      
+
       const categoryResponse: any = await categoryApi.getCategories();
       const categoriesRes: ServiceCategory[] = categoryResponse.data ?? [];
 
-      // Fetch subcategories for every category in parallel, keyed by category id
+      // Fetch subcategories for every category in parallel, keyed by category id.
+      // Each call is individually guarded so one category's subcategory
+      // request failing doesn't take down the whole screen (services and
+      // categories still loaded fine).
       const subCategoryResults = await Promise.all(
         categoriesRes.map((cat) =>
           categoryApi
-          .getSubCategories(cat.id)
-          .then((res: any) => [cat.id, res.data ?? []] as const)
+            .getSubCategories(cat.id)
+            .then((res: any) => [cat.id, res.data ?? []] as const)
+            .catch(() => [cat.id, []] as const)
         )
       );
       const subCategoryMap: Record<number, ServiceSubCategory[]> = {};
@@ -208,8 +202,7 @@ export default function ServicesScreen() {
     return map;
   }, [subCategoriesByCategoryId]);
 
-  // for select option based on categories
-    const categoryOptions = useMemo(
+  const categoryOptions = useMemo(
     () => [
       { key: "all", label: "All Categories" },
       ...categories.map((cat) => ({
@@ -220,23 +213,19 @@ export default function ServicesScreen() {
     [categories]
   );
 
-
   const filteredAndSortedServices = useMemo(() => {
     const fromTime = dateFrom?.getTime() ?? null;
     const toTime =
       dateTo != null
-        ? new Date(
-            dateTo.getFullYear(),
-            dateTo.getMonth(),
-            dateTo.getDate(),
-            23,
-            59,
-            59
-          ).getTime()
+        ? new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate(), 23, 59, 59).getTime()
         : null;
 
     const filtered = services.filter((job) => {
-      if (statusFilter !== "all" && job.status?.toLowerCase() !== statusFilter.toLowerCase()) {
+      if (categoryFilter !== "all" && String(job.service_category_id) !== categoryFilter) {
+        return false;
+      }
+
+      if (statusFilter !== "all" && !matchesStatusFilter(job.status, statusFilter as any)) {
         return false;
       }
 
@@ -251,31 +240,16 @@ export default function ServicesScreen() {
     });
 
     const sorted = [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case "oldest":
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        case "scheduled_asc":
-          return new Date(a.scheduled_for ?? 0).getTime() - new Date(b.scheduled_for ?? 0).getTime();
-        case "scheduled_desc":
-          return new Date(b.scheduled_for ?? 0).getTime() - new Date(a.scheduled_for ?? 0).getTime();
-        default:
-          return 0;
-      }
+      const aTime = new Date(a.scheduled_for ?? 0).getTime();
+      const bTime = new Date(b.scheduled_for ?? 0).getTime();
+      return sortBy === "latest" ? bTime - aTime : aTime - bTime;
     });
 
     return sorted;
-  }, [services, statusFilter, sortBy, dateFrom, dateTo]);
-
-  const clearDateFilters = () => {
-    setDateFrom("");
-    setDateTo("");
-  };
+  }, [services, categoryFilter, statusFilter, sortBy, dateFrom, dateTo]);
 
   const renderItem = ({ item }: { item: ServiceRequest }) => {
     const categoryName = categoryNameById[item.service_category_id] ?? "Service";
-    // Assumes the service record carries the subcategory id under one of these keys
     const subCategoryId = (item as any).sub_category_id ?? (item as any).service_sub_category_id;
     const subCategoryName = subCategoryId ? subCategoryNameById[subCategoryId] : undefined;
 
@@ -296,7 +270,7 @@ export default function ServicesScreen() {
             {subCategoryName && <Text style={styles.serviceSubtitle}>{subCategoryName}</Text>}
           </View>
 
-          {/* <Badge label={item.status} variant={getStatusBadgeVariant(item.status)} /> */}
+          <Badge label={getStatusLabel(item.status)} variant={getStatusBadgeColor(item.status)} />
         </View>
 
         <Text style={styles.serviceDescription}>{item.description}</Text>
@@ -321,16 +295,13 @@ export default function ServicesScreen() {
           <Text style={styles.metaValue}>{item.status}</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.trackBtn}
-          onPress={() =>
+        <TouchableOpacity>
+          <AppButton label={'viewDetails'} onPress={() =>
             router.push({
               pathname: "/track",
               params: { serviceId: item.id },
             })
-          }
-        >
-          <Text style={styles.trackBtnText}>View Details →</Text>
+          } loading={loading} />
         </TouchableOpacity>
       </TouchableOpacity>
     );
@@ -357,7 +328,7 @@ export default function ServicesScreen() {
         </View>
       )}
 
-      {/* Status + Category as select dropdowns */}
+      {/* Category + Service Timeline + Sort toggle, all in one row */}
       <View style={styles.selectRow}>
         <SelectField
           label="Category"
@@ -367,38 +338,31 @@ export default function ServicesScreen() {
         />
 
         <SelectField
-          label="Status"
+          label="Service Timeline"
           value={statusFilter}
           options={STATUS_OPTIONS}
           onChange={setStatusFilter}
         />
-        </View>
+
+        <SortToggleButton
+          sortBy={sortBy}
+          onToggle={() => setSortBy((prev) => (prev === "latest" ? "oldest" : "latest"))}
+        />
+      </View>
 
       {/* Date range filter */}
       <View style={styles.dateRow}>
         <View style={styles.dateInputWrap}>
           <Text style={styles.dateLabel}>Scheduled From</Text>
-
-          <TouchableOpacity
-            style={styles.dateInput}
-            onPress={() => setShowFromPicker(true)}
-          >
-            <Text>
-              {dateFrom ? formatDate(dateFrom) : "Select Date"}
-            </Text>
+          <TouchableOpacity style={styles.dateInput} onPress={() => setShowFromPicker(true)}>
+            <Text>{dateFrom ? formatDate(dateFrom) : "Select Date"}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.dateInputWrap}>
           <Text style={styles.dateLabel}>Scheduled To</Text>
-
-          <TouchableOpacity
-            style={styles.dateInput}
-            onPress={() => setShowToPicker(true)}
-          >
-            <Text>
-              {dateTo ? formatDate(dateTo) : "Select Date"}
-            </Text>
+          <TouchableOpacity style={styles.dateInput} onPress={() => setShowToPicker(true)}>
+            <Text>{dateTo ? formatDate(dateTo) : "Select Date"}</Text>
           </TouchableOpacity>
         </View>
 
@@ -413,10 +377,6 @@ export default function ServicesScreen() {
             <Text style={styles.clearDatesText}>Clear</Text>
           </TouchableOpacity>
         )}
-      </View>
-
-      <View style={styles.dateRow}>
-        <SelectField label="Sort by" value={sortBy} options={SORT_OPTIONS} onChange={setSortBy} />
       </View>
 
       <FlatList
@@ -437,8 +397,7 @@ export default function ServicesScreen() {
         }
       />
 
-
-      {/* Date Picker */}
+      {/* Date Pickers */}
       {showFromPicker && (
         <DateTimePicker
           value={dateFrom ?? new Date()}
@@ -446,10 +405,7 @@ export default function ServicesScreen() {
           display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={(event, selectedDate) => {
             setShowFromPicker(false);
-
-            if (selectedDate) {
-              setDateFrom(selectedDate);
-            }
+            if (selectedDate) setDateFrom(selectedDate);
           }}
         />
       )}
@@ -461,10 +417,7 @@ export default function ServicesScreen() {
           display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={(event, selectedDate) => {
             setShowToPicker(false);
-
-            if (selectedDate) {
-              setDateTo(selectedDate);
-            }
+            if (selectedDate) setDateTo(selectedDate);
           }}
         />
       )}
@@ -555,6 +508,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
+  sortToggleWrap: {
+    // Not flex: 1 like the selects — sized to content so it doesn't crowd
+    // Category / Service Timeline on narrow screens.
+  },
+
+  sortToggleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 4,
+  },
+
+  sortToggleText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#111827",
+  },
+
+  sortToggleArrow: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#111827",
+  },
+
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.35)",
@@ -624,6 +606,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     fontSize: 13,
+    justifyContent: "center",
+    minHeight: 38,
   },
 
   clearDatesBtn: {
@@ -687,19 +671,6 @@ const styles = StyleSheet.create({
   metaValue: {
     fontWeight: "600",
     fontSize: 13,
-  },
-
-  trackBtn: {
-    marginTop: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: "center",
-    backgroundColor: "#111827",
-  },
-
-  trackBtnText: {
-    color: "#FFF",
-    fontWeight: "600",
   },
 
   emptyState: {

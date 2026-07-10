@@ -16,28 +16,57 @@ import { AppButton, Avatar, Badge, Card, InvoiceTotal, RowKV, Topbar } from '../
 import { useLanguage } from '../src/context/LanguageContext';
 import { serviceApi } from '../src/services/api';
 import { PricingSummary, ServiceRequest, TrackingData } from '../types';
+import { getStatusBadgeColor, getStatusLabel, getTimelineProgress } from "../src/utils/serviceStatus";
 
 const TIMELINE_STEPS = [
-  { key: 'requestReceived', icon: '✓' },
-  { key: 'technicianAssigned', icon: '✓' },
-  { key: 'enRouteLocation', icon: '→' },
-  { key: 'workInProgress', icon: '' },
-  { key: 'completed', icon: '' },
+  { key: 'requestReceived', label: 'Request Received' },
+  { key: 'technicianAssigned', label: 'Technician Assigned' },
+  { key: 'enRouteLocation', label: 'En Route to your Location' },
+  { key: 'workInProgress', label: 'Work in Progress' },
+  { key: 'completed', label: 'Work Completed' },
 ] as const;
 
-function getStepStatus(job: ServiceRequest, index: number): 'done' | 'current' | 'todo' {
-  const statusMap: Record<string, number> = {
-    'Request received': 0,
-    'Technician Assigned': 1,
-    'Work In Progress': 3,
-    'On Hold': 3,
-    'Completed': 4,
-  };
-  if (job.technician_en_route && index === 2) return 'current';
-  const currentStep = statusMap[job.status] ?? 0;
-  if (index < currentStep) return 'done';
-  if (index === currentStep) return 'current';
-  return 'todo';
+function getStepStatus(job: ServiceRequest, index: number): "done" | "current" | "todo" {
+  const { activeIndex, isCancelled } = getTimelineProgress(job.status);
+
+  // Cancelled is a terminal state outside the linear flow — don't try to
+  // place it on the stepper. Handle it as a banner/badge instead, see below.
+  if (isCancelled) return "todo";
+
+  if (index < activeIndex) return "done";
+  if (index === activeIndex) return "current";
+  return "todo";
+}
+
+function TimelineDot({
+  label,
+  state,
+  isLast,
+}: {
+  label: string;
+  state: "done" | "current" | "todo";
+  isLast: boolean;
+}) {
+  return (
+    <View style={styles.tlItem}>
+      <View style={styles.tlDotCol}>
+        <View
+          style={[
+            styles.tlDot,
+            state === "done" && styles.tlDotDone,
+            state === "current" && styles.tlDotCurrent,
+            state === "todo" && styles.tlDotTodo,
+          ]}
+        >
+          {state === "done" && <Text style={{ color: "#fff", fontSize: 11 }}>✓</Text>}
+        </View>
+        {!isLast && <View style={styles.tlLine} />}
+      </View>
+      <View style={styles.tlContent}>
+        <Text style={styles.tlTitle}>{label}</Text>
+      </View>
+    </View>
+  );
 }
 
 export default function Track() {
@@ -93,7 +122,7 @@ export default function Track() {
     setApprovingLoading(true);
     try {
       await serviceApi.agreeToQuotation(servId);
-      
+
       router.push({
         pathname: "/payment",
         params: { serviceId: servId },
@@ -137,6 +166,7 @@ export default function Track() {
     }
   };
 
+  // IMPORTANT: bail out before touching `job.*` — job is null until loadJob() resolves
   if (loading || !job) {
     return (
       <View style={CommonStyles.screen}>
@@ -148,6 +178,8 @@ export default function Track() {
     );
   }
 
+  // Safe from here on — job is guaranteed non-null
+  const { activeIndex, isCancelled, isPaid } = getTimelineProgress(job.status);
   const tech = job.assigned_technician;
   const initials = tech?.full_name?.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase() ?? '?';
 
@@ -168,16 +200,16 @@ export default function Track() {
           <View style={{ padding: 14 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.text }}>Service ID #{servId}</Text>
-              <Badge label={job.status} variant="amber" />
+              <Badge label={getStatusLabel(job.status)} variant={getStatusBadgeColor(job.status)} />
             </View>
-            <RowKV label={t('Scheduled Date')} value={job.scheduled_for} last />
+            <RowKV label={t('Scheduled Date')} value={job.scheduled_for?.split('T')[0] ?? '—'} last />
             <RowKV label={t('Scheduled Time Slot')} value={job.scheduled_time_slot} last />
             <RowKV label={t('Estimated Amount')} value={job.original_estimated_amount} last />
           </View>
         </Card>
 
         {/* Track Job in Progress */}
-        {(job.status === 'en_route' || job.status === 'arrived' || job.status === 'started' ) && (
+        {(job.status === 'en_route' || job.status === 'arrived' || job.status === 'started') && (
         <Card label={t('Live Tracker')} >
           <View style={styles.mapPh}>
             <Text style={{ fontSize: 36, marginBottom: 8 }}>📍</Text>
@@ -240,28 +272,27 @@ export default function Track() {
 
         {/* Status Timeline */}
         <Card label={t('statusTimeline')}>
-          {TIMELINE_STEPS.map(({ key, icon }, idx) => {
-            const status = getStepStatus(job, idx);
-            return (
-              <View key={key} style={styles.tlItem}>
-                <View style={styles.tlDotCol}>
-                  <View style={[styles.tlDot,
-                    status === 'done' && styles.tlDotDone,
-                    status === 'current' && styles.tlDotCurrent,
-                    status === 'todo' && styles.tlDotTodo,
-                  ]}>
-                    {status !== 'todo' && <Text style={{ fontSize: 11, color: Colors.white }}>{icon || '●'}</Text>}
-                  </View>
-                  {idx < TIMELINE_STEPS.length - 1 && <View style={styles.tlLine} />}
-                </View>
-                <View style={styles.tlContent}>
-                  <Text style={[styles.tlTitle, status === 'todo' && { color: Colors.text3 }]}>
-                    {t(key as any)}
-                  </Text>
-                </View>
-              </View>
-            );
-          })}
+          {isCancelled ? (
+            <View style={{ padding: 14, alignItems: 'center' }}>
+              <Text style={{ fontSize: 13, color: Colors.text2 }}>This request was cancelled</Text>
+            </View>
+          ) : (
+            <View style={{ padding: 14 }}>
+              {TIMELINE_STEPS.map((step, i) => (
+                <TimelineDot
+                  key={step.key}
+                  label={step.label}
+                  state={getStepStatus(job, i)}
+                  isLast={i === TIMELINE_STEPS.length - 1}
+                />
+              ))}
+              {isPaid && (
+                <Text style={{ fontSize: 12, color: Colors.green, fontWeight: '600', marginTop: 4 }}>
+                  Payment received
+                </Text>
+              )}
+            </View>
+          )}
         </Card>
 
         {/* Quotation Approval */}
