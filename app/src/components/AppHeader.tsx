@@ -15,20 +15,22 @@ function getGreeting(): "goodMorning" | "goodAfternoon" | "goodEvening" {
 }
 
 export function AppHeader() {
-  const { user, token } = useAuth();
-  const isLoggedIn = !!token;
+  const { user, isLoggedIn } = useAuth();
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
+
+  // console.log("isLoggedIn:", isLoggedIn);
+  // console.log("User:", user);
 
   return (
     <View style={{ paddingTop: insets.top, backgroundColor: Colors.brandDark }}>
       <Topbar
         subtitle={isLoggedIn ? t(getGreeting()) : t('appName')}
-        title={isLoggedIn ? (user?.full_name ?? "") : t("customerApp")}
+        title={isLoggedIn ? (user?.name?.split(" ")[0] ?? "") : t("customerApp")}
         right={
           <View style={styles.rightRow}>
             <LanguageToggle />
-            {isLoggedIn && (
+            {/* {isLoggedIn && (
               <TouchableOpacity style={{ position: "relative" }}>
                 <Ionicons
                   name="notifications-outline"
@@ -37,7 +39,7 @@ export function AppHeader() {
                 />
                 <View style={styles.notifDot} />
               </TouchableOpacity>
-            )}
+            )} */}
           </View>
         }
       />

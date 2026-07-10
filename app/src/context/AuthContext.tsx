@@ -6,6 +6,7 @@ import { router } from "expo-router";
 interface AuthContextType {
   user: Customer | null;
   token: string | null;
+  isLoggedIn: boolean;
   isLoading: boolean;
   signIn: (token: string, user: Customer) => Promise<void>;
   signOut: () => Promise<void>;
@@ -14,6 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   token: null,
+  isLoggedIn: false,
   isLoading: true,
   signIn: async () => {},
   signOut: async () => {},
@@ -24,9 +26,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const isLoggedIn = !!token && !!user;
+
   useEffect(() => {
     const restoreSession = async () => {
       try {
+        // TEMP: Clear storage once
+        await AsyncStorage.clear();
+
         const savedToken = await AsyncStorage.getItem('auth_token');
         const savedUser = await AsyncStorage.getItem('auth_user');
 
@@ -56,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(newToken);
     setUser(newUser);
 
-    const saved = await AsyncStorage.getItem('auth_user');
+    // const saved = await AsyncStorage.getItem('auth_user');
     // console.log('verified saved user:', saved);
   };
 
@@ -70,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, token, isLoggedIn, isLoading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

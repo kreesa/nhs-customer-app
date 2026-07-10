@@ -57,19 +57,15 @@ export default function LoginScreen() {
 
       // console.log('Login response:', JSON.stringify(data, null, 2));
 
-      // To be updated : proper sign in
-      // await signIn(data.token, data.user);
+      // Update AuthContext + persist token & user
+      await signIn(data.token, data.user);
 
-      // quick fix : store user id and pass
-      await saveToken(data.token);
+      // Store user id if needed elsewhere
+      await AsyncStorage.setItem("user_id", String(data.user.id));
 
-      // console.log('user_id:',data.user.id);
-
-      await AsyncStorage.setItem('user_id', String(data.user.id));
-      router.replace('/home');
-
+      router.replace("/home");
     } catch (err: any) {
-      Alert.alert("Login failed", err.message);
+      Alert.alert("Login failed", err.message || "Unable to login.");
     } finally {
       setLoading(false);
     }
