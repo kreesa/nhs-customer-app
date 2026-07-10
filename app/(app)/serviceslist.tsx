@@ -237,7 +237,7 @@ export default function ServicesScreen() {
       >
         <View style={styles.serviceHeader}>
           <View style={{ flex: 1, marginRight: 10 }}>
-            <Text style={styles.serviceTitle}>{categoryName}</Text>
+            <Text style={styles.serviceTitle}>{t('service')} - {categoryName}</Text>
           </View>
 
           <Badge label={getStatusLabel(item.status)} variant={getStatusBadgeColor(item.status)} />
@@ -246,33 +246,32 @@ export default function ServicesScreen() {
         <Text style={styles.serviceDescription}>{item.description}</Text>
 
         <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>📅 Scheduled</Text>
+          <Text style={styles.metaLabel}>📅 {t('scheduledDate')}</Text>
           <Text style={styles.metaValue}>{item.scheduled_for?.split("T")[0] ?? "—"}</Text>
         </View>
 
         <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>🆔 Request ID</Text>
+          <Text style={styles.metaLabel}>🆔 {t('serviceRequestNo')}</Text>
           <Text style={styles.metaValue}>#{item.id}</Text>
         </View>
 
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>🕒 Created</Text>
+        {/* <View style={styles.metaRow}>
+          <Text style={styles.metaLabel}>🕒 {t('created')}</Text>
           <Text style={styles.metaValue}>{item.created_at?.split("T")[0] ?? "—"}</Text>
-        </View>
+        </View> */}
 
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>📍 Status</Text>
+        {/* <View style={styles.metaRow}>
+          <Text style={styles.metaLabel}>📍 {t('status')}</Text>
           <Text style={styles.metaValue}>{item.status}</Text>
-        </View>
+        </View> */}
 
-        <TouchableOpacity>
-          <AppButton label={t('viewDetails')} onPress={() =>
-            router.push({
-              pathname: "/track",
-              params: { serviceId: item.id },
-            })
-          } loading={loading} />
-        </TouchableOpacity>
+        <AppButton label={t('viewDetails')} variant='outline' onPress={() =>
+          router.push({
+            pathname: "/track",
+            params: { serviceId: item.id },
+          })
+        } loading={loading} />
+        
       </TouchableOpacity>
     );
   };

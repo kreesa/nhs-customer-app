@@ -18,6 +18,7 @@ import { getDeviceName } from "../src/services/device";
 import { useAuth } from '../src/context/AuthContext';
 import { useLanguage } from "../src/context/LanguageContext";
 import { Colors } from '../src/components/theme';
+import { AppButton } from "../src/components/ui";
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
@@ -135,15 +136,11 @@ export default function LoginScreen() {
             <Text style={styles.forgotText}>{t('forgotPassword')}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.button}
+          <AppButton 
+            label={t('signIn')} 
             onPress={handleLogin}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? "..." : t('signIn')}
-            </Text>
-          </TouchableOpacity>
+           loading={loading} />
+
         </View>
 
         <Text style={styles.termsText}>
@@ -326,19 +323,6 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontSize: 13,
     fontWeight: "600",
-  },
-
-  button: {
-    backgroundColor: COLORS.accent,
-    paddingVertical: 15,
-    borderRadius: 10,
-  },
-
-  buttonText: {
-    color: "#fff",
-    textAlign: "center",
-    fontWeight: "700",
-    fontSize: 15,
   },
 
   termsText: {

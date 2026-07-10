@@ -123,6 +123,9 @@ export const translations = {
     areYouSure: 'Are you sure?',
     noServiceTextMessage: 'Try changing filters or create a new service request.',
     sort: 'Sort',
+    scheduled: 'Scheduled',
+    created: 'Created',
+    status: 'Status',
 
     // Payment
     payment: 'Payment',
@@ -321,6 +324,9 @@ export const translations = {
     areYouSure: 'के तपाईं निश्चित हुनुहुन्छ?',
     noServiceTextMessage: 'फिल्टर परिवर्तन गरेर वा नयाँ सेवा अनुरोध सिर्जना गरेर प्रयास गर्नुहोस्।',
     sort: 'क्रमबद्ध गर्नुहोस्',
+    scheduled: 'निर्धारित',
+    created: 'सिर्जना गरिएको',
+    status: 'स्थिति',
 
     // Payment
     payment: 'भुक्तानी',

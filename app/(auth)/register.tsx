@@ -15,6 +15,7 @@ import { authApi } from "../src/services/api";
 import { useAuth } from '../src/context/AuthContext';
 import { useLanguage } from "../src/context/LanguageContext";
 import { Colors } from '../src/components/theme';
+import { AppButton } from "../src/components/ui";
 
 export default function RegisterScreen() {
   const { language, setLanguage } = useLanguage();
@@ -223,15 +224,11 @@ export default function RegisterScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={[styles.button, { marginTop: 8 }]}
+          <AppButton 
+            label={t('register')} 
             onPress={handleRegister}
-            disabled={loading}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? "..." : t('register')}
-            </Text>
-          </TouchableOpacity>
+           loading={loading} />
+           
         </View>
 
         <Text style={styles.termsText}>
@@ -421,19 +418,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     color: COLORS.textDark,
-  },
-
-  button: {
-    backgroundColor: COLORS.accent,
-    paddingVertical: 15,
-    borderRadius: 10,
-  },
-
-  buttonText: {
-    color: "#fff",
-    textAlign: "center",
-    fontWeight: "700",
-    fontSize: 15,
   },
 
   termsText: {
