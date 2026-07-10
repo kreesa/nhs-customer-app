@@ -216,13 +216,13 @@ export default function Home() {
               title: t('allServices'), sub: t('listAllServices'),
               onPress: () => router.push("/serviceslist"),
             },
-            {
-              icon: '🧾', bg: Colors.greenBg, color: Colors.green,
-              title: t('invoicesPayments'), sub: t('viewTransactions'),
-              onPress: () => router.push({
-                pathname: "/home",   //to be updated with payment details
-              }),
-            },
+            // {
+            //   icon: '🧾', bg: Colors.greenBg, color: Colors.green,
+            //   title: t('invoicesPayments'), sub: t('viewTransactions'),
+            //   onPress: () => router.push({
+            //     pathname: "/home",   //to be updated with payment details
+            //   }),
+            // },
           ].map(({ icon, bg, color, title, sub, onPress }) => (
             <TouchableOpacity key={title} style={styles.quickAction} onPress={onPress} activeOpacity={0.75}>
               <View style={[styles.quickIcon, { backgroundColor: bg }]}>

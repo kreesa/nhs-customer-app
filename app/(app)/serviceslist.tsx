@@ -15,7 +15,7 @@ import { router } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLanguage } from '../src/context/LanguageContext';
 import { categoryApi, serviceApi } from "../src/services/api";
-import { ServiceRequest, ServiceCategory, ServiceSubCategory } from "../src/types";
+import { ServiceRequest, ServiceCategory } from "../src/types";
 import { AppButton, Badge } from "../src/components/ui";
 import {
   getStatusLabel,
@@ -110,9 +110,6 @@ export default function ServicesScreen() {
   const { t } = useLanguage();
   const [services, setServices] = useState<ServiceRequest[]>([]);
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
-  const [subCategoriesByCategoryId, setSubCategoriesByCategoryId] = useState<
-    Record<number, ServiceSubCategory[]>
-  >({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -162,26 +159,8 @@ export default function ServicesScreen() {
       const categoryResponse: any = await categoryApi.getCategories();
       const categoriesRes: ServiceCategory[] = categoryResponse.data ?? [];
 
-      // Fetch subcategories for every category in parallel, keyed by category id.
-      // Each call is individually guarded so one category's subcategory
-      // request failing doesn't take down the whole screen (services and
-      // categories still loaded fine).
-      const subCategoryResults = await Promise.all(
-        categoriesRes.map((cat) =>
-          categoryApi
-            .getSubCategories(cat.id)
-            .then((res: any) => [cat.id, res.data ?? []] as const)
-            .catch(() => [cat.id, []] as const)
-        )
-      );
-      const subCategoryMap: Record<number, ServiceSubCategory[]> = {};
-      subCategoryResults.forEach(([catId, subs]) => {
-        subCategoryMap[catId] = subs;
-      });
-
       setServices(servicesRes);
       setCategories(categoriesRes);
-      setSubCategoriesByCategoryId(subCategoryMap);
     } catch (err: any) {
       setError(err?.message ?? t('failedToLoadService'));
     } finally {
@@ -206,17 +185,6 @@ export default function ServicesScreen() {
     });
     return map;
   }, [categories]);
-
-  // Flatten every subcategory across all categories into a single id -> name map
-  const subCategoryNameById = useMemo(() => {
-    const map: Record<number, string> = {};
-    Object.values(subCategoriesByCategoryId).forEach((subs) => {
-      subs.forEach((sub) => {
-        map[sub.id] = sub.name;
-      });
-    });
-    return map;
-  }, [subCategoriesByCategoryId]);
 
   const filteredAndSortedServices = useMemo(() => {
     const fromTime = dateFrom?.getTime() ?? null;
@@ -255,8 +223,6 @@ export default function ServicesScreen() {
 
   const renderItem = ({ item }: { item: ServiceRequest }) => {
     const categoryName = categoryNameById[item.service_category_id] ?? t('service');
-    const subCategoryId = (item as any).sub_category_id ?? (item as any).service_sub_category_id;
-    const subCategoryName = subCategoryId ? subCategoryNameById[subCategoryId] : undefined;
 
     return (
       <TouchableOpacity
@@ -272,7 +238,6 @@ export default function ServicesScreen() {
         <View style={styles.serviceHeader}>
           <View style={{ flex: 1, marginRight: 10 }}>
             <Text style={styles.serviceTitle}>{categoryName}</Text>
-            {subCategoryName && <Text style={styles.serviceSubtitle}>{subCategoryName}</Text>}
           </View>
 
           <Badge label={getStatusLabel(item.status)} variant={getStatusBadgeColor(item.status)} />
@@ -646,12 +611,6 @@ const styles = StyleSheet.create({
   serviceTitle: {
     fontSize: 16,
     fontWeight: "700",
-  },
-
-  serviceSubtitle: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: 2,
   },
 
   serviceDescription: {
