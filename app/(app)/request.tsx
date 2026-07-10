@@ -255,11 +255,11 @@ export default function Request() {
         execution_mode: executionMode,
       };
 
-      console.log("Submitting payload:", JSON.stringify(payload, null, 2));
+      // console.log("Submitting payload:", JSON.stringify(payload, null, 2));
 
       const req = await serviceApi.createRequest(Number(userId), payload);
-      console.log("Number(userId):", JSON.stringify(Number(userId), null, 2));
-      console.log("Request created:", JSON.stringify(req, null, 2));
+      // console.log("Number(userId):", JSON.stringify(Number(userId), null, 2));
+      // console.log("Request created:", JSON.stringify(req, null, 2));
 
       router.push({
         pathname: "/track",

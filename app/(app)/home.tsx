@@ -39,7 +39,7 @@ export default function Home() {
 
         const res = await categoryApi.getCategories();
 
-        console.log("CATEGORY API RAW:", res);
+        // console.log("CATEGORY API RAW:", res);
 
         const list =
           Array.isArray(res)
@@ -52,7 +52,7 @@ export default function Home() {
 
         setCategories(list);
       } catch (err) {
-        console.log("CATEGORY ERROR:", err);
+        // console.log("CATEGORY ERROR:", err);
         setCategories([]);
         setErrorCategories("Failed to load services");
       } finally {

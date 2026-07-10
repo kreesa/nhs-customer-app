@@ -55,7 +55,7 @@ export default function LoginScreen() {
 
       const data = await login(email, password, device_name);
 
-      console.log('Login response:', JSON.stringify(data, null, 2));
+      // console.log('Login response:', JSON.stringify(data, null, 2));
 
       // To be updated : proper sign in
       // await signIn(data.token, data.user);

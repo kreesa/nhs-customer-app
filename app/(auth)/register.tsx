@@ -75,14 +75,14 @@ export default function RegisterScreen() {
       device_name: "customer-app",
     };
 
-    console.log("Register Payload:", payload);
+    // console.log("Register Payload:", payload);
 
     try {
       setLoading(true);
 
       const response = await authApi.register(payload);
 
-      console.log("Register Response:", response);
+      // console.log("Register Response:", response);
 
       Alert.alert("Success", "Registration successful");
 

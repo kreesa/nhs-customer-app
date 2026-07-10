@@ -30,8 +30,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const savedToken = await AsyncStorage.getItem('auth_token');
         const savedUser = await AsyncStorage.getItem('auth_user');
 
-        console.log('savedToken:', savedToken);
-        console.log('savedUser:', savedUser);
+        // console.log('savedToken:', savedToken);
+        // console.log('savedUser:', savedUser);
 
         if (savedToken && savedUser) {
           setToken(savedToken);
@@ -48,8 +48,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []); // ← closing brace was missing
 
   const signIn = async (newToken: string, newUser: Customer) => {
-    console.log('signIn called with token:', newToken);
-    console.log('signIn called with user:', JSON.stringify(newUser, null, 2));
+    // console.log('signIn called with token:', newToken);
+    // console.log('signIn called with user:', JSON.stringify(newUser, null, 2));
 
     await AsyncStorage.setItem('auth_token', newToken);
     await AsyncStorage.setItem('auth_user', JSON.stringify(newUser));
@@ -57,11 +57,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(newUser);
 
     const saved = await AsyncStorage.getItem('auth_user');
-    console.log('verified saved user:', saved);
+    // console.log('verified saved user:', saved);
   };
 
   const signOut = async () => {
-     console.log("Signing out...");
+    //  console.log("Signing out...");
     await AsyncStorage.removeItem('auth_token');
     await AsyncStorage.removeItem('auth_user');
     setToken(null);
