@@ -315,19 +315,6 @@ export default function Request() {
     <View style={CommonStyles.screen}>
       <Topbar title={t('newRequest')} onBack={() => router.back()} />
 
-      {/* Step bar */}
-      <View style={styles.stepBar}>
-        {[1, 2, 3, 4].map((n) => (
-          <React.Fragment key={n}>
-            <View style={[styles.stepDot, n === 1 ? styles.stepDone : n === 2 ? styles.stepCurrent : styles.stepTodo]}>
-              <Text style={[styles.stepNum, n <= 2 && { color: Colors.white }]}>{n}</Text>
-            </View>
-            {n < 4 && <View style={styles.stepLine} />}
-          </React.Fragment>
-        ))}
-        <Text style={styles.stepLabel}>{t('stepOf', { current: 2, total: 4 })}</Text>
-      </View>
-
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -565,18 +552,6 @@ export default function Request() {
 
 const styles = StyleSheet.create({
   scroll: { padding: Spacing.lg, paddingBottom: 40, gap: 12 },
-  stepBar: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 14, paddingVertical: 10,
-    backgroundColor: Colors.brandBg,
-  },
-  stepDot: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  stepDone: { backgroundColor: Colors.brand },
-  stepCurrent: { backgroundColor: Colors.brandDark },
-  stepTodo: { backgroundColor: '#ddd' },
-  stepNum: { fontSize: 12, fontWeight: '600', color: Colors.text3 },
-  stepLine: { flex: 1, height: 2, backgroundColor: Colors.borderMd },
-  stepLabel: { fontSize: 11, color: Colors.brand, marginLeft: 8, fontWeight: '500' },
   field: { marginBottom: 12 },
   chip: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: Radius.full,
