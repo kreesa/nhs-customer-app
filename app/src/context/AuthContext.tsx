@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Customer } from '../types';
 import { router } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
 
 interface AuthContextType {
   user: Customer | null;
@@ -58,7 +59,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // console.log('signIn called with token:', newToken);
     // console.log('signIn called with user:', JSON.stringify(newUser, null, 2));
 
-    await AsyncStorage.setItem('auth_token', newToken);
+    // await AsyncStorage.setItem('auth_token', newToken);
+    await SecureStore.setItemAsync('auth_token', newToken);
     await AsyncStorage.setItem('auth_user', JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
@@ -69,7 +71,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     //  console.log("Signing out...");
-    await AsyncStorage.removeItem('auth_token');
+    // await AsyncStorage.removeItem('auth_token');
+    await SecureStore.deleteItemAsync('auth_token');
     await AsyncStorage.removeItem('auth_user');
     setToken(null);
     setUser(null);
