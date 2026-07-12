@@ -103,7 +103,7 @@ export default function LoginScreen() {
 
           <Text style={styles.label}>{t('email')}</Text>
           <TextInput
-            placeholder="sarah.k@email.com"
+            placeholder="example@gmail.com"
             placeholderTextColor="#9CA3AF"
             value={email}
             onChangeText={setEmail}

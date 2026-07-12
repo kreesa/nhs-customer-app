@@ -133,7 +133,7 @@ export default function RegisterScreen() {
 
           <Text style={styles.label}>{t('firstName')}</Text>
           <TextInput
-            placeholder="Sarah"
+            placeholder="Sahara"
             placeholderTextColor="#9CA3AF"
             style={styles.input}
             value={firstName}
@@ -151,7 +151,7 @@ export default function RegisterScreen() {
 
           <Text style={styles.label}>{t('email')}</Text>
           <TextInput
-            placeholder="sarah.k@email.com"
+            placeholder="example@gmail.com"
             placeholderTextColor="#9CA3AF"
             style={styles.input}
             value={email}
@@ -228,7 +228,7 @@ export default function RegisterScreen() {
             label={t('register')} 
             onPress={handleRegister}
            loading={loading} />
-           
+
         </View>
 
         <Text style={styles.termsText}>
