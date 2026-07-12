@@ -58,7 +58,7 @@ export interface ServiceCategory {
 export interface ServiceSubCategory {
   id: number;
   name: string;
-  service_category_id_id: number;
+  service_category_id: number;
 }
 
 // ─── Service Request ─────────────────────────────────────────────────────────
