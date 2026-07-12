@@ -9,6 +9,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Linking,
 } from "react-native";
 
 import { Colors, CommonStyles, Radius, Spacing } from "../src/components/theme";
@@ -29,6 +30,8 @@ import {
   getTimelineProgress,
 } from "../src/utils/serviceStatus";
 import { PricingSummary, ServiceRequest, TrackingData } from "../types";
+
+
 
 const TIMELINE_STEPS = [
   { key: "requestReceived", label: "Request Received" },
@@ -367,9 +370,24 @@ export default function Track() {
               <View style={{ gap: 8 }}>
                 <TouchableOpacity
                   style={styles.iconBtn}
-                  onPress={() =>
-                    Alert.alert("Call", `Calling ${tech.full_name}...`)
-                  }
+                  onPress={async () => {
+                    const phone = tech.phone_number; // or tech.phone
+
+                    if (!phone) {
+                      Alert.alert("Error", "Phone number not available.");
+                      return;
+                    }
+
+                    const url = `tel:${phone}`;
+
+                    const supported = await Linking.canOpenURL(url);
+
+                    if (supported) {
+                      await Linking.openURL(url);
+                    } else {
+                      Alert.alert("Error", "Unable to make a phone call.");
+                    }
+                  }}
                 >
                   <Text style={{ fontSize: 18 }}>📞</Text>
                 </TouchableOpacity>
