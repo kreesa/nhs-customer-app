@@ -273,7 +273,8 @@ export default function Track() {
         {/* Track Job in Progress */}
         {(job.status === "en_route" ||
           job.status === "arrived" ||
-          job.status === "started") && (
+          job.status === "started") 
+          && (
           <Card label={t("liveTracker")}>
             <View style={styles.mapPh}>
               <Text style={{ fontSize: 36, marginBottom: 8 }}>📍</Text>
@@ -371,14 +372,6 @@ export default function Track() {
                   }
                 >
                   <Text style={{ fontSize: 18 }}>📞</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconBtn}
-                  onPress={() =>
-                    Alert.alert("Chat", "Chat feature coming soon")
-                  }
-                >
-                  <Text style={{ fontSize: 18 }}>💬</Text>
                 </TouchableOpacity>
               </View>
             </View>
