@@ -29,8 +29,8 @@ import {
   getStatusLabel,
   getTimelineProgress,
 } from "../src/utils/serviceStatus";
+import { haversineKm, estimateEtaMinutes } from "../src/utils/location";
 import { PricingSummary, ServiceRequest, TrackingData } from "../types";
-
 
 
 const TIMELINE_STEPS = [
@@ -123,6 +123,7 @@ export default function Track() {
           servId,
           data.assigned_technician.id,
         );
+        console.log("tracking data:", JSON.stringify(track, null, 2)); // ← add this temporarily
         setTracking(track);
       }
     } catch (e) {
@@ -132,6 +133,30 @@ export default function Track() {
       setRefreshing(false);
     }
   };
+
+
+  // ← derived values, recompute whenever tracking or job changes
+  const distanceKm = useMemo(() => {
+    if (
+      tracking?.latitude == null ||
+      tracking?.longitude == null ||
+      job?.site_latitude == null ||
+      job?.site_longitude == null
+    ) {
+      return null;
+    }
+    return haversineKm(
+      tracking.latitude,
+      tracking.longitude,
+      job.site_latitude,
+      job.site_longitude,
+    );
+  }, [tracking, job]);
+
+  const etaMinutes = useMemo(
+    () => (distanceKm != null ? estimateEtaMinutes(distanceKm) : null),
+    [distanceKm],
+  );
 
   useEffect(() => {
     loadJob();
@@ -281,53 +306,51 @@ export default function Track() {
           <Card label={t("liveTracker")}>
             <View style={styles.mapPh}>
               <Text style={{ fontSize: 36, marginBottom: 8 }}>📍</Text>
+              <Text
+                style={{
+                  color: Colors.green,
+                  fontSize: 13,
+                  fontWeight: "600",
+                }}
+              >
+                {job.status === "en_route"
+                  ? "Technician is on the way"
+                  : job.status === "arrived"
+                  ? "Technician has arrived"
+                  : "Technician is working on your request"}
+              </Text>
+              {/* Live GPS distance/ETA hidden for now
               {tracking ? (
-                <>
-                  <Text
-                    style={{
-                      color: Colors.green,
-                      fontSize: 13,
-                      fontWeight: "600",
-                    }}
-                  >
-                    Live GPS — Technician moving
-                  </Text>
-                  <Text
-                    style={{
-                      color: Colors.green,
-                      fontSize: 11,
-                      opacity: 0.8,
-                      marginTop: 2,
-                    }}
-                  >
-                    {t("kmAway", { km: tracking.distance_km ?? "?" })} ·{" "}
-                    {t("etaMinutes", { minutes: tracking.eta_minutes ?? "?" })}
-                  </Text>
-                </>
-              ) : (
                 <Text
                   style={{
                     color: Colors.green,
-                    fontSize: 13,
-                    fontWeight: "500",
+                    fontSize: 11,
+                    opacity: 0.8,
+                    marginTop: 2,
                   }}
                 >
+                  {t("kmAway", { km: tracking.distance_km ?? "?" })} ·{" "}
+                  {t("etaMinutes", { minutes: tracking.eta_minutes ?? "?" })}
+                </Text>
+              ) : (
+                <Text style={{ color: Colors.green, fontSize: 11, opacity: 0.8, marginTop: 2 }}>
                   Location updates when en route
                 </Text>
               )}
+              */}
             </View>
+            {/* Distance/ETA rows hidden for now */}
             <View style={{ padding: 14 }}>
               <RowKV
-                label={t("Estimated Arrival")}
-                value={
-                  tracking ? `${tracking.eta_minutes} ${t("minutes")}` : "—"
-                }
+                label={t("estimatedArrival")}
+                value={etaMinutes != null ? `${etaMinutes} ${t("minutes")}` : "—"}
               />
               <RowKV
-                label={t("Distance Remaining")}
-                value={tracking ? `${tracking.distance_km} km` : "—"}
+                label={t("distanceRemaining")}
+                value={distanceKm != null ? `${distanceKm.toFixed(1)} km` : "—"}
               />
             </View>
+            
           </Card>
         )}
 
