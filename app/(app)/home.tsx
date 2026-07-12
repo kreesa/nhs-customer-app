@@ -15,7 +15,7 @@ import { useAuth, AuthProvider } from '../src/context/AuthContext';
 import { useLanguage } from '../src/context/LanguageContext';
 import { categoryApi, serviceApi } from '../src/services/api';
 import { ServiceRequest } from '../src/types';
-import { getStatusLabel, getStatusBadgeColor } from "../src/utils/serviceStatus";
+import { getStatusLabel, getStatusBadgeColor, getTimelineStepKey } from "../src/utils/serviceStatus";
 
 
 export default function Home() {
@@ -31,7 +31,7 @@ export default function Home() {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [errorCategories, setErrorCategories] = useState("");
 
-  useEffect(() => {
+    useEffect(() => {
     const loadCategories = async () => {
       try {
         setLoadingCategories(true);
@@ -70,10 +70,11 @@ export default function Home() {
   const loadData = useCallback(async () => {
     try {
       const jobs = await serviceApi.getMyRequests();
-      const active = jobs.find(
-        (j) => j.status !== 'cancelled' 
-        // && j.status !== 'On Hold'
-      ) ?? null;
+       // "Active" = still moving through the timeline — not cancelled, completed, or paid.
+      const active = jobs.find((j) => {
+        const step = getTimelineStepKey(j.status);
+        return step !== 'cancelled' && step !== 'completed' && step !== 'paymentMade';
+      }) ?? null;
       setActiveJob(active);
       setRecentJobs(jobs.slice(0, 5));
     } catch (e) {
@@ -106,16 +107,13 @@ export default function Home() {
               {categories.find((cat) => cat.id === activeJob.service_category_id)?.name} Service — {activeJob.description?.slice(0, 30)}
             </Text>
             <View style={styles.heroRow}>
-              <View style={styles.heroBadge}>
-                <Text style={styles.heroBadgeText}>{activeJob.status}</Text>
-              </View>
-              {activeJob.status === 'Technician Assigned' && (
-                <Text style={styles.heroEta}>{t('etaMinutes', { minutes: 12 })}</Text>
-              )}
+              <Badge label={getStatusLabel(activeJob.status)} variant={getStatusBadgeColor(activeJob.status)} />
+              {getTimelineStepKey(activeJob.status) === 'technicianAssigned'
+              }
             </View>
             <TouchableOpacity
               style={styles.heroBtn}
-              onPress={() =>  router.push({
+              onPress={() => router.push({
                 pathname: "/track",
                 params: { serviceId: activeJob.id },
               })}
