@@ -1,4 +1,4 @@
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 import { View, StyleSheet } from 'react-native';
 import BottomBar from '../src/components/bottombar';
 import { Colors } from '../src/components/theme';
@@ -7,7 +7,7 @@ export default function AppLayout() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Slot />
+        <Stack screenOptions={{ headerShown: false }} />
       </View>
       <BottomBar />
     </View>
