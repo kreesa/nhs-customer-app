@@ -1,5 +1,5 @@
 {
-  "name": "nhs-login-test",
+  "name": "nhs-customer-app",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {

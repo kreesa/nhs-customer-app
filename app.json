@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "nhs-login-test",
-    "slug": "nhs-login-test",
+    "name": "nhs-customer-app",
+    "slug": "nhs-customer-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -19,7 +19,11 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "output": "static",
@@ -55,7 +59,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "38f9bcf4-c650-4e2d-b76c-69a1d77a3efd"
+        "projectId": "7751480c-b258-4f12-afc9-7a052eeb14b0"
       }
     },
     "owner": "chrisha"
