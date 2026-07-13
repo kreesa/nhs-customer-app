@@ -522,8 +522,8 @@ export default function Track() {
         </Card>
 
         {/* Invoice Generated */}
-        {job.status === "invoiced" && (
-        <Card label="Invoice">
+        {(job.status === "invoiced" || job.status === "paid")  && (
+        <Card label="Generated Invoice">
           {invoiceLoading ? (
             <View style={{ padding: 14, alignItems: "center" }}>
               <Text style={{ color: Colors.text2, fontSize: 12 }}>Loading invoice...</Text>
