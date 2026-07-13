@@ -87,8 +87,8 @@ export default function RegisterScreen() {
 
       Alert.alert("Success", "Registration successful");
 
-      // Example:
-      // navigation.navigate("Login");
+      router.replace("/");
+      
     } catch (error: any) {
       console.error(error);
 

@@ -449,6 +449,7 @@ export default function Request() {
               onFocus={() => setFocused("addr")}
               onBlur={() => setFocused(null)}
               placeholderTextColor={Colors.text3}
+              editable={false}
             />
           </View>
           {/* Map placeholder */}
