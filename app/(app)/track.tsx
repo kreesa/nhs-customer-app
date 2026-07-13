@@ -11,7 +11,7 @@ import {
   View,
   Linking,
 } from "react-native";
-
+import * as ImagePicker from "expo-image-picker";
 import { Colors, CommonStyles, Radius, Spacing } from "../src/components/theme";
 import {
   AppButton,
@@ -109,6 +109,10 @@ export default function Track() {
   const [invoice, setInvoice] = useState<InvoiceSummary | null>(null);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   
+  const [paymentMethod, setPaymentMethod] = useState<"online" | "cash" | null>(null);
+  const [proofUri, setProofUri] = useState<string | null>(null);
+  const [submittingPayment, setSubmittingPayment] = useState(false);
+
   const loadJob = async () => {
     try {
       const data = await serviceApi.getRequest(servId);
@@ -170,6 +174,7 @@ export default function Track() {
     };
   }, [servId]);
 
+  // Invoice and Payment Handling
   useEffect(() => {
     const loadInvoice = async () => {
       if (job?.status !== "completed") return;
@@ -186,6 +191,50 @@ export default function Track() {
     loadInvoice();
   }, [job?.status, job?.id]);
 
+  const pickProofImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.5,
+        allowsEditing: false,
+        exif: false,
+      });
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        setProofUri(result.assets[0].uri);
+      }
+    } catch (err: any) {
+      Alert.alert("Error", "Could not open image picker.");
+    }
+  };
+
+  const handleSubmitPayment = async () => {
+    if (!paymentMethod) {
+      Alert.alert("Error", "Please select a payment method.");
+      return;
+    }
+    if (!proofUri) {
+      Alert.alert("Error", "Please upload proof of payment.");
+      return;
+    }
+
+    setSubmittingPayment(true);
+    try {
+      const uploaded = await uploadApi.uploadImage(proofUri);
+      await serviceApi.submitPayment(job.id, {
+        payment_method: paymentMethod,
+        proof_url: uploaded.url,
+      });
+      Alert.alert("Submitted", "Payment details submitted successfully.");
+      router.back(); // or refresh job state, depending on your flow
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Failed to submit payment.");
+    } finally {
+      setSubmittingPayment(false);
+    }
+  };
+
+
+  // Handle approve decline not in use
   const handleApprove = async () => {
     if (!job) return;
     setApprovingLoading(true);
@@ -473,7 +522,7 @@ export default function Track() {
         </Card>
 
         {/* Invoice Generated */}
-        {job.status === "completed" && (
+        {job.status === "invoiced" && (
         <Card label="Invoice">
           {invoiceLoading ? (
             <View style={{ padding: 14, alignItems: "center" }}>
@@ -522,8 +571,53 @@ export default function Track() {
                 </View>
           )}
         </Card>
-        
-      )}
+        )}
+
+        {/* Payment */}
+        {job.status === "invoiced" && (
+        <Card label="Payment">
+          <View style={{ padding: 14 }}>
+            <Text style={CommonStyles.fieldLabel}>Payment Method</Text>
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 6, marginBottom: 16 }}>
+              <TouchableOpacity
+                style={[styles.methodChip, paymentMethod === "online" && styles.methodChipSelected]}
+                onPress={() => setPaymentMethod("online")}
+              >
+                <Text style={[styles.methodChipText, paymentMethod === "online" && styles.methodChipTextSelected]}>
+                  Online
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.methodChip, paymentMethod === "cash" && styles.methodChipSelected]}
+                onPress={() => setPaymentMethod("cash")}
+              >
+                <Text style={[styles.methodChipText, paymentMethod === "cash" && styles.methodChipTextSelected]}>
+                  Cash
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={CommonStyles.fieldLabel}>Upload Document</Text>
+            <TouchableOpacity style={styles.uploadBox} onPress={pickProofImage}>
+              {proofUri ? (
+                <Image source={{ uri: proofUri }} style={{ width: 100, height: 100, borderRadius: 8 }} resizeMode="cover" />
+              ) : (
+                <>
+                  <Text style={{ fontSize: 28, color: Colors.brand, marginBottom: 4 }}>📎</Text>
+                  <Text style={{ fontSize: 13, color: Colors.text3 }}>Tap to upload invoice/screenshot</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <AppButton
+              label="Submit Payment"
+              onPress={handleSubmitPayment}
+              loading={submittingPayment}
+              style={{ marginTop: 16 }}
+            />
+          </View>
+        </Card>
+        )}    
 
         {/* Quotation Approval */}
         {job.send_quotation_to_customer &&
@@ -643,4 +737,25 @@ const styles = StyleSheet.create({
   },
   tlContent: { flex: 1, paddingTop: 2 },
   tlTitle: { fontSize: 13, fontWeight: "500", color: Colors.text },
+
+  methodChip: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    borderColor: Colors.borderMd,
+    alignItems: "center",
+    backgroundColor: Colors.pageBg,
+  },
+  methodChipSelected: { borderColor: Colors.brand, backgroundColor: Colors.brandBg },
+  methodChipText: { fontSize: 13, fontWeight: "500", color: Colors.text2 },
+  methodChipTextSelected: { color: Colors.brandDark },
+  uploadBox: {
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: Colors.borderMd,
+    borderRadius: Radius.lg,
+    padding: 20,
+    alignItems: "center",
+  },
 });

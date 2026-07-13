@@ -189,6 +189,16 @@ export const serviceApi = {
     return res?.data ?? res;
   },
 
+  submitPayment: async (
+    serviceId: number,
+    payload: { payment_method: "online" | "cash"; proof_url: string }
+  ): Promise<void> => {
+    return request(`/api/service-requests/${serviceId}/payment`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
   agreeToQuotation: (serviceId: number) =>
     request(`/api/${serviceId}/agree-quotation`, { method: "PUT" }),
 
