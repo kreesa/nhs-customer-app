@@ -30,7 +30,7 @@ import {
   getTimelineProgress,
 } from "../src/utils/serviceStatus";
 import { haversineKm, estimateEtaMinutes } from "../src/utils/location";
-import { PricingSummary, ServiceRequest, TrackingData } from "../types";
+import { PricingSummary, ServiceRequest, TrackingData, InvoiceSummary } from "../types";
 
 
 const TIMELINE_STEPS = [
@@ -106,6 +106,9 @@ export default function Track() {
   const [reportLoading, setReportLoading] = useState(false);
   const trackInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [invoice, setInvoice] = useState<InvoiceSummary | null>(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  
   const loadJob = async () => {
     try {
       const data = await serviceApi.getRequest(servId);
@@ -166,6 +169,22 @@ export default function Track() {
       if (trackInterval.current) clearInterval(trackInterval.current);
     };
   }, [servId]);
+
+  useEffect(() => {
+    const loadInvoice = async () => {
+      if (job?.status !== "completed") return;
+      setInvoiceLoading(true);
+      try {
+        const data = await serviceApi.getInvoice(job.id); // adjust to your actual customer-side API function
+        setInvoice(data);
+      } catch (e) {
+        console.error("Failed to load invoice:", e);
+      } finally {
+        setInvoiceLoading(false);
+      }
+    };
+    loadInvoice();
+  }, [job?.status, job?.id]);
 
   const handleApprove = async () => {
     if (!job) return;
@@ -292,7 +311,7 @@ export default function Track() {
             />
             <RowKV
               label={t("estimatedAmount")}
-              value={job.original_estimated_amount}
+              value={job.original_estimate_amount}
               last
             />
           </View>
@@ -452,6 +471,59 @@ export default function Track() {
             </View>
           )}
         </Card>
+
+        {/* Invoice Generated */}
+        {job.status === "completed" && (
+        <Card label="Invoice">
+          {invoiceLoading ? (
+            <View style={{ padding: 14, alignItems: "center" }}>
+              <Text style={{ color: Colors.text2, fontSize: 12 }}>Loading invoice...</Text>
+            </View>
+          ) : !invoice ? (
+            <View style={{ padding: 14 }}>
+              <Text style={{ color: Colors.text2, fontSize: 12 }}>
+                Invoice not available yet.
+              </Text>
+            </View>
+          ) : (
+                <View style={{ padding: 14 }}>
+                  {/* {Number(invoice.subtotal_labor) > 0 && ( */}
+                    <RowKV label="Labor" value={`NPR ${Number(invoice.subtotal_labor).toLocaleString()}`} />
+                  {/* )}
+                  {Number(invoice.subtotal_material) > 0 && ( */}
+                    <RowKV label="Material" value={`NPR ${Number(invoice.subtotal_material).toLocaleString()}`} />
+                  {/* )}
+                  {Number(invoice.subtotal_logistics) > 0 && ( */}
+                    <RowKV label="Logistics" value={`NPR ${Number(invoice.subtotal_logistics).toLocaleString()}`} />
+                  {/* )}
+                  {Number(invoice.commission_amount) > 0 && ( */}
+                    <RowKV label="Commission" value={`NPR ${Number(invoice.commission_amount).toLocaleString()}`} />
+                  {/* )}
+                  {Number(invoice.tax_amount) > 0 && ( */}
+                    <RowKV label="Tax" value={`NPR ${Number(invoice.tax_amount).toLocaleString()}`} />
+                  {/* )}
+                  {Number(invoice.discount_amount) > 0 && ( */}
+                    <RowKV label="Discount" value={`- NPR ${Number(invoice.discount_amount).toLocaleString()}`} />
+                  {/* )} */}
+                  <View
+                    style={{
+                      borderTopWidth: 1.5,
+                      borderTopColor: Colors.borderMd ?? "#D1D5DB",
+                      marginTop: 8,
+                      paddingTop: 10,
+                    }}
+                  >
+                    <RowKV
+                      label="Total"
+                      value={`NPR ${Number(invoice.total_amount).toLocaleString()}`}
+                      last
+                    />
+                  </View>
+                </View>
+          )}
+        </Card>
+        
+      )}
 
         {/* Quotation Approval */}
         {job.send_quotation_to_customer &&

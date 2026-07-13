@@ -144,6 +144,18 @@ export interface PricingSummary {
   total: number;
 }
 
+// ─── InvoiceSummary ──────────────────────────────────────────────────────────
+export interface InvoiceSummary {
+  invoice_status: "draft" | "finalized" | "paid"; // adjust if there are more states
+  subtotal_labor: string;
+  subtotal_material: string;
+  subtotal_logistics: string;
+  commission_amount: string;
+  tax_amount: string;
+  discount_amount: string;
+  total_amount: string;
+}
+
 // ─── Payment ─────────────────────────────────────────────────────────────────
 export interface PaymentPayload {
   agreed_to_quotation: boolean;

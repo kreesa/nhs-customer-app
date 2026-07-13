@@ -184,6 +184,11 @@ export const serviceApi = {
     return res?.data ?? res;
   },
 
+  getInvoice: async (id: number) => {
+    const res: any = await request(`/api/jobs/${id}/invoice`);
+    return res?.data ?? res;
+  },
+
   agreeToQuotation: (serviceId: number) =>
     request(`/api/${serviceId}/agree-quotation`, { method: "PUT" }),
 
