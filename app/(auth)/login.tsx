@@ -52,7 +52,8 @@ export default function LoginScreen() {
     try {
       setLoading(true);
 
-      const device_name = await getDeviceName();
+      // const device_name = await getDeviceName();
+      const device_name = 'customer-app';
 
       const data = await login(email, password, device_name);
 
