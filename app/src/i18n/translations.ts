@@ -74,6 +74,16 @@ export const translations = {
     submitRequest: 'Submit request',
     stepOf: 'Step {{current}} of {{total}}',
 
+    selectServiceCategory: 'Please select a service category.',
+    selectSubCategory: 'Please select a sub-category.',
+    describeProblemMsg: 'Please describe the problem.',
+    pinServiceLocation: 'Please pin your service location on the map.',
+    selectPreferredDate: 'Please select a preferred date.',
+    selectTimeSlot: 'Please select a time slot.',
+    fillRequiredFields: 'Please fill in all required fields.',
+    error: 'Error',
+    sessionExpiredLoginAgain: 'Session expired. Please log in again.',
+
     // Track
     jobTracker: 'Job tracker',
     assignedTechnician: 'Assigned technician',
@@ -274,6 +284,16 @@ export const translations = {
     timeSlot: 'समय स्लट',
     submitRequest: 'अनुरोध पेश गर्नुहोस्',
     stepOf: 'चरण {{current}} को {{total}}',
+
+    selectServiceCategory: 'कृपया सेवा श्रेणी छान्नुहोस्।',
+    selectSubCategory: 'कृपया उप-श्रेणी छान्नुहोस्।',
+    describeProblemMsg: 'कृपया समस्या वर्णन गर्नुहोस्।',
+    pinServiceLocation: 'कृपया नक्सामा सेवाको स्थान चिन्ह लगाउनुहोस्।',
+    selectPreferredDate: 'कृपया उपयुक्त मिति छान्नुहोस्।',
+    selectTimeSlot: 'कृपया समय छनोट गर्नुहोस्।',
+    fillRequiredFields: 'कृपया सबै आवश्यक विवरण भर्नुहोस्।',
+    error: 'त्रुटि',
+    sessionExpiredLoginAgain: 'तपाईंको सत्र समाप्त भएको छ। कृपया फेरि लगइन गर्नुहोस्।',
 
     // Track
     jobTracker: 'काम ट्र्याकर',

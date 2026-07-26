@@ -30,7 +30,7 @@ import {
   getTimelineProgress,
 } from "../src/utils/serviceStatus";
 import { haversineKm, estimateEtaMinutes } from "../src/utils/location";
-import { PricingSummary, ServiceRequest, TrackingData, InvoiceSummary } from "../types";
+import { PricingSummary, ServiceRequest, TrackingData, InvoiceSummary } from "../src/types";
 
 
 const TIMELINE_STEPS = [

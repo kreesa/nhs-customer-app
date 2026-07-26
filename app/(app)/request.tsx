@@ -69,6 +69,16 @@ export default function Request() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
 
+  const [errors, setErrors] = useState<{
+    category?: string;
+    subCategory?: string;
+    description?: string;
+    address?: string;
+    location?: string;
+    date?: string;
+    slot?: string;
+  }>({});
+
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -179,6 +189,7 @@ export default function Request() {
           if (result.address) {
             setAddress(result.address); // ← only update address if a real address resolved
           }
+          setErrors((prev) => ({ ...prev, location: undefined }));
           mapPickerStore.clear();
         }
       });
@@ -196,37 +207,49 @@ export default function Request() {
   const executionMode = selectedCategoryData?.execution_mode;
 
   const handleSubmit = async () => {
+    const newErrors: typeof errors = {};
+
     if (!selectedCategory) {
-      Alert.alert("Error", "Please select a service category.");
-      return;
+      newErrors.category = t("selectServiceCategory");
     }
+
     if (!selectedSubCategory) {
-      Alert.alert("Error", "Please select a sub-category.");
-      return;
+      newErrors.subCategory = t("selectSubCategory");
     }
+
     if (!description.trim()) {
-      Alert.alert("Error", "Please describe the problem.");
-      return;
+      newErrors.description = t("describeProblemMsg");
     }
+
     if (!address.trim()) {
-      Alert.alert("Error", "Please enter a service address.");
-      return;
+      newErrors.address = t("pinServiceLocation");
     }
+
     if (!latitude || !longitude) {
-      Alert.alert("Error", "Please pin your service location on the map.");
-      return;
+      newErrors.location = t("pinServiceLocation");
     }
+
+    if (!selectedDate) {
+      newErrors.date = t("selectPreferredDate");
+    }
+
     if (!selectedSlot) {
-      Alert.alert("Error", "Please select a time slot.");
+      newErrors.slot = t("selectTimeSlot");
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      Alert.alert(t("error"), t("fillRequiredFields"));
       return;
     }
 
     const userId = await AsyncStorage.getItem("user_id");
-    // console.log('UserId', userId);
+
     if (!userId) {
-      Alert.alert("Error", "Session expired. Please log in again.");
+      Alert.alert(t("error"), t("sessionExpiredLoginAgain"));
       return;
-    }
+    }         
 
     setLoading(true);
     try {
@@ -260,6 +283,8 @@ export default function Request() {
       const req = await serviceApi.createRequest(Number(userId), payload);
       // console.log("Number(userId):", JSON.stringify(Number(userId), null, 2));
       // console.log("Request created:", JSON.stringify(req, null, 2));
+
+      setErrors({});
 
       router.push({
         pathname: "/track",
@@ -340,7 +365,9 @@ export default function Request() {
         <Card label={t("serviceDetails")}>
           {/* Category Picker */}
           <View style={styles.field}>
-            <Text style={CommonStyles.fieldLabel}>{t("serviceCategory")}</Text>
+            <Text style={CommonStyles.fieldLabel}>
+              {t("serviceCategory")} <Text style={styles.required}>*</Text>
+            </Text>
 
             {loadingCategories && <Text>Loading categories...</Text>}
             {errorCategories ? (
@@ -363,7 +390,10 @@ export default function Request() {
                     styles.chip,
                     selectedCategory === cat.id && styles.chipSelected,
                   ]}
-                  onPress={() => setSelectedCategory(cat.id)}
+                  onPress={() => {
+                    setSelectedCategory(cat.id);
+                    setErrors((prev) => ({ ...prev, category: undefined }));
+                  }}
                 >
                   <Text
                     style={[
@@ -376,12 +406,17 @@ export default function Request() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+            {errors.category ? (
+              <Text style={styles.errorText}>{errors.category}</Text>
+            ) : null}
           </View>
 
           {/* Sub-category Picker */}
           {selectedCategory && (
             <View style={styles.field}>
-              <Text style={CommonStyles.fieldLabel}>{t("subCategory")}</Text>
+              <Text style={CommonStyles.fieldLabel}>
+                {t("subCategory")} <Text style={styles.required}>*</Text>
+              </Text>
 
               {loadingSubCategories && <Text>Loading sub-categories...</Text>}
 
@@ -401,7 +436,10 @@ export default function Request() {
                       styles.chip,
                       selectedSubCategory === sub.id && styles.chipSelected,
                     ]}
-                    onPress={() => setSelectedSubCategory(sub.id)}
+                    onPress={() => {
+                      setSelectedSubCategory(sub.id);
+                      setErrors((prev) => ({ ...prev, subCategory: undefined }));
+                    }}
                   >
                     <Text
                       style={[
@@ -415,37 +453,57 @@ export default function Request() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+              {errors.subCategory ? (
+                <Text style={styles.errorText}>{errors.subCategory}</Text>
+              ) : null}
             </View>
           )}
 
           {/* Description */}
           <View style={styles.field}>
-            <Text style={CommonStyles.fieldLabel}>{t("describeProblem")}</Text>
+            <Text style={CommonStyles.fieldLabel}>
+              {t("describeProblem")} <Text style={styles.required}>*</Text>
+            </Text>
             <TextInput
               style={[
                 CommonStyles.input,
                 { height: 80, textAlignVertical: "top", paddingTop: 10 },
                 focused === "desc" && { borderColor: Colors.brand },
+                errors.description && styles.inputError,
               ]}
               placeholder={t("problemPlaceholder")}
               value={description}
-              onChangeText={setDescription}
+              onChangeText={(val) => {
+                setDescription(val);
+                setErrors((prev) => ({ ...prev, description: undefined }));
+              }}
               onFocus={() => setFocused("desc")}
               onBlur={() => setFocused(null)}
               multiline
               placeholderTextColor={Colors.text3}
             />
+            {errors.description ? (
+              <Text style={styles.errorText}>{errors.description}</Text>
+            ) : null}
           </View>
         </Card>
 
         {/* Location */}
-        <Card label={t("serviceLocation")}>
+        <Card label={`${t("serviceLocation")} *`}>
           <View style={styles.field}>
-            <Text style={CommonStyles.fieldLabel}>{t("fullAddress")}</Text>
+            <Text style={CommonStyles.fieldLabel}>
+              {t("fullAddress")} <Text style={styles.required}>*</Text>
+            </Text>
             <TextInput
-              style={inputStyle("addr")}
+              style={[
+                ...inputStyle("addr"),
+                errors.location && styles.inputError,
+              ]}
               value={address}
-              onChangeText={setAddress}
+              onChangeText={(val) => {
+                setAddress(val);
+                setErrors((prev) => ({ ...prev, address: undefined }));
+              }}
               onFocus={() => setFocused("addr")}
               onBlur={() => setFocused(null)}
               placeholderTextColor={Colors.text3}
@@ -518,6 +576,9 @@ export default function Request() {
                 </View>
               )}
             </TouchableOpacity>
+            {errors.location ? (
+              <Text style={styles.errorText}>{errors.location}</Text>
+            ) : null}
           </View>
         </Card>
 
@@ -565,17 +626,25 @@ export default function Request() {
         </Card>
 
         {/* Schedule */}
-        <Card label={t("preferredSchedule")}>
+        <Card label={`${t("preferredSchedule")} *`}>
           <View style={styles.field}>
-            <Text style={CommonStyles.fieldLabel}>{t("date")}</Text>
+            <Text style={CommonStyles.fieldLabel}>
+              {t("date")} <Text style={styles.required}>*</Text>
+            </Text>
             <TouchableOpacity
-              style={CommonStyles.input}
+              style={[
+                CommonStyles.input,
+                errors.date && styles.inputError,
+              ]}
               onPress={() => setShowDatePicker(true)}
             >
               <Text style={{ color: Colors.text, fontSize: 14 }}>
                 {selectedDate.toDateString()}
               </Text>
             </TouchableOpacity>
+            {errors.date ? (
+              <Text style={styles.errorText}>{errors.date}</Text>
+            ) : null}
           </View>
           {showDatePicker && (
             <DateTimePicker
@@ -584,13 +653,16 @@ export default function Request() {
               minimumDate={new Date()}
               onChange={(_, date) => {
                 setShowDatePicker(false);
-                if (date) setSelectedDate(date);
+                if (date) {
+                  setSelectedDate(date);
+                  setErrors((prev) => ({ ...prev, date: undefined }));
+                }
               }}
             />
           )}
 
           <Text style={[CommonStyles.fieldLabel, { marginBottom: 8 }]}>
-            {t("timeSlot")}
+            {t("timeSlot")} <Text style={styles.required}>*</Text>
           </Text>
 
           {!selectedSubCategory ? (
@@ -616,7 +688,10 @@ export default function Request() {
                     styles.slot,
                     selectedSlot === slot && styles.slotSelected,
                   ]}
-                  onPress={() => setSelectedSlot(slot)}
+                  onPress={() => {
+                    setSelectedSlot(slot);
+                    setErrors((prev) => ({ ...prev, slot: undefined }));
+                  }}
                 >
                   <Text
                     style={[
@@ -630,6 +705,9 @@ export default function Request() {
               ))}
             </View>
           )}
+          {errors.slot ? (
+            <Text style={styles.errorText}>{errors.slot}</Text>
+          ) : null}
         </Card>
 
         <AppButton
@@ -725,4 +803,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   mapOverlayText: { color: "#fff", fontSize: 12, fontWeight: "500" },
+
+  required: { color: Colors.red, fontSize: 13 },
+  errorText: { color: Colors.red, fontSize: 12, marginTop: 4 },
+  inputError: { borderColor: Colors.red },
 });
