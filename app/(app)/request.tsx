@@ -19,7 +19,7 @@ import MapView, { Marker } from "react-native-maps";
 import { Colors, CommonStyles, Radius, Spacing } from "../src/components/theme";
 import { AppButton, Card, PageHeader } from "../src/components/ui";
 import { useLanguage } from "../src/context/LanguageContext";
-import { categoryApi, serviceApi, uploadApi } from "../src/services/api";
+import { categoryApi, serviceApi } from "../src/services/api";
 import { mapPickerStore } from "../src/store/mapPickerStore";
 import { ServiceCategory, ServiceSubCategory } from "../src/types";
 
@@ -254,23 +254,14 @@ export default function Request() {
 
     setLoading(true);
     try {
-      // Upload images
-      const uploadedUrls: string[] = [];
-      for (const uri of images) {
-        try {
-          const res = await uploadApi.uploadImage(uri);
-          uploadedUrls.push(res.url);
-        } catch (uploadErr: any) {
-          console.warn("Image upload failed:", uploadErr.message);
-        }
-      }
-
+      // Files are sent directly to /api/jobs as multipart form-data —
+      // serviceApi.createRequest handles building the FormData and
+      // attaching each image, so no separate upload step is needed here.
       const payload = {
         customer_id: Number(userId),
         service_category_id: selectedCategory,
         service_sub_category_id: selectedSubCategory,
         description: description,
-        files: uploadedUrls,  // problem_images
         site_address: address,
         site_longitude: longitude ?? 0,
         site_latitude: latitude ?? 0,
@@ -281,7 +272,7 @@ export default function Request() {
 
       console.log("Submitting payload:", JSON.stringify(payload, null, 2));
 
-      const req = await serviceApi.createRequest(Number(userId), payload);
+      const req = await serviceApi.createRequest(Number(userId), payload, images);
       // console.log("Number(userId):", JSON.stringify(Number(userId), null, 2));
       // console.log("Request created:", JSON.stringify(req, null, 2));
 
@@ -324,14 +315,14 @@ export default function Request() {
 
   //pickimage and upload
   const pickImage = async () => {
-    if (images.length >= 1) {
-      Alert.alert("Limit reached", "Maximum 1 files allowed.");
+    if (images.length >= 3) {
+      Alert.alert("Limit reached", "Maximum 3 files allowed.");
       return;
     }
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes:  ["images"],
         quality: 0.5,
         allowsEditing: false,
         exif: false,
@@ -446,7 +437,7 @@ export default function Request() {
                     ]}
                     onPress={() => {
                       setSelectedSubCategory(sub.id);
-                      setErrors((prev) => ({ ...prev, subCategory: undefined }));
+                      setErrors((prev) => ({
                         ...prev,
                         subCategory: undefined,
                       }));
@@ -643,8 +634,6 @@ export default function Request() {
               {t("date")} <Text style={styles.required}>*</Text>
             </Text>
             <TouchableOpacity
-              style={[
-                CommonStyles.input,
               style={[CommonStyles.input, errors.date && styles.inputError]}
               onPress={() => setShowDatePicker(true)}
             >

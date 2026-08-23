@@ -149,12 +149,65 @@ export const categoryApi = {
 };
 
 export const serviceApi = {
-  createRequest: async (customerId: number, data: ServiceRequestPayload) => {
-    const res: any = await request(`/api/jobs`, {
-      method: "POST",
-      body: JSON.stringify(data),
+  /**
+   * Creates a new job/service request.
+   * Sends multipart/form-data (NOT JSON) because photos are attached
+   * directly to this endpoint — /api/jobs handles both the request
+   * fields and the file uploads in one call.
+   *
+   * @param customerId  - kept for signature compatibility (also present in `data`)
+   * @param data        - all non-file request fields
+   * @param imageUris   - local file URIs from ImagePicker (already compressed, if applicable)
+   */
+  createRequest: async (
+    customerId: number,
+    data: ServiceRequestPayload,
+    imageUris: string[] = [],
+  ) => {
+    const token = await getToken();
+    const formData = new FormData();
+
+    formData.append("customer_id", String(data.customer_id));
+    formData.append("service_category_id", String(data.service_category_id));
+    formData.append("service_sub_category_id", String(data.service_sub_category_id));
+    formData.append("description", data.description);
+    formData.append("site_address", data.site_address);
+    formData.append("site_longitude", String(data.site_longitude));
+    formData.append("site_latitude", String(data.site_latitude));
+    formData.append("scheduled_for", data.scheduled_for);
+    formData.append("scheduled_time_slot", data.scheduled_time_slot);
+    formData.append("execution_mode", data.execution_mode);
+
+    imageUris.forEach((uri, i) => {
+      formData.append("files[]", {
+        uri,
+        type: "image/jpeg",
+        name: `upload_${Date.now()}_${i}.jpg`,
+      } as any);
     });
-    return res?.data ?? res;
+
+    const response = await fetch(`${BASE_URL}/api/jobs`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        // no Content-Type here — fetch sets multipart/form-data with the
+        // correct boundary automatically when body is a FormData instance
+      },
+      body: formData,
+    });
+
+    const resData: any = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      // Preserve Laravel-style validation error shape ({ message, errors })
+      // so existing error handling in request.tsx keeps working.
+      const err: any = new Error(resData.message || `HTTP ${response.status}`);
+      err.body = resData;
+      throw err;
+    }
+
+    return resData?.data ?? resData;
   },
 
   getAvailableSlots: async (
@@ -218,37 +271,4 @@ export const feedbackApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
-};
-
-/* ─────────────────────────────────────────────
-   FILE UPLOAD
-──────────────────────────────────────────── */
-
-export const uploadApi = {
-  uploadImage: async (uri: string, type = "image/jpeg") => {
-    const token = await getToken();
-
-    const formData = new FormData();
-    formData.append("file", {
-      uri,
-      type,
-      name: `upload_${Date.now()}.jpg`,
-    } as any);
-
-    const response = await fetch(`${BASE_URL}/api/upload`, {
-      method: "POST",
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        // no Content-Type — RN sets multipart/form-data with correct boundary automatically
-      },
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errText = await response.text().catch(() => "");
-      throw new Error(`Upload failed: ${response.status} ${errText}`);
-    }
-
-    return response.json();
-  },
 };
