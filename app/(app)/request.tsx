@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -321,9 +322,10 @@ export default function Request() {
     }
   };
 
+  //pickimage and upload
   const pickImage = async () => {
-    if (images.length >= 5) {
-      Alert.alert("Limit reached", "Maximum 5 files allowed.");
+    if (images.length >= 1) {
+      Alert.alert("Limit reached", "Maximum 1 files allowed.");
       return;
     }
 
@@ -338,7 +340,13 @@ export default function Request() {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const uri = result.assets[0]?.uri;
         if (uri) {
-          setImages((prev) => [...prev, uri]);
+          // Compress + resize before storing
+          const compressed = await ImageManipulator.manipulateAsync(
+            uri,
+            [{ resize: { width: 1080 } }], // scale down, height auto-scales
+            { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG },
+          );
+          setImages((prev) => [...prev, compressed.uri]);
         }
       }
     } catch (err: any) {

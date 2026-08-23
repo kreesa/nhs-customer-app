@@ -238,14 +238,15 @@ export const uploadApi = {
     const response = await fetch(`${BASE_URL}/api/upload`, {
       method: "POST",
       headers: {
-        "Content-Type": "multipart/form-data",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        // no Content-Type — RN sets multipart/form-data with correct boundary automatically
       },
       body: formData,
     });
 
     if (!response.ok) {
-      throw new Error("Upload failed");
+      const errText = await response.text().catch(() => "");
+      throw new Error(`Upload failed: ${response.status} ${errText}`);
     }
 
     return response.json();
