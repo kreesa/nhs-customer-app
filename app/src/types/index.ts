@@ -75,7 +75,7 @@ export interface ServiceRequest {
   service_category_id: number;
   service_sub_category_id: number;
   description: string;
-  problem_images?: string[];
+  files?: string[];   //problem_images
   site_address: string;
   site_longitude: number;
   site_latitude: number;
@@ -101,7 +101,7 @@ export interface ServiceRequestPayload {
   service_category_id: number;
   service_sub_category_id: number;
   description: string;
-  problem_images?: string[];
+  files?: string[];  //problem_images
   site_address: string;
   site_longitude: number;
   site_latitude: number;

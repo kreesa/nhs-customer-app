@@ -269,7 +269,7 @@ export default function Request() {
         service_category_id: selectedCategory,
         service_sub_category_id: selectedSubCategory,
         description: description,
-        problem_images: uploadedUrls,
+        files: uploadedUrls,  // problem_images
         site_address: address,
         site_longitude: longitude ?? 0,
         site_latitude: latitude ?? 0,
@@ -278,7 +278,7 @@ export default function Request() {
         execution_mode: executionMode,
       };
 
-      // console.log("Submitting payload:", JSON.stringify(payload, null, 2));
+      console.log("Submitting payload:", JSON.stringify(payload, null, 2));
 
       const req = await serviceApi.createRequest(Number(userId), payload);
       // console.log("Number(userId):", JSON.stringify(Number(userId), null, 2));
@@ -439,6 +439,9 @@ export default function Request() {
                     onPress={() => {
                       setSelectedSubCategory(sub.id);
                       setErrors((prev) => ({ ...prev, subCategory: undefined }));
+                        ...prev,
+                        subCategory: undefined,
+                      }));
                     }}
                   >
                     <Text
@@ -634,8 +637,7 @@ export default function Request() {
             <TouchableOpacity
               style={[
                 CommonStyles.input,
-                errors.date && styles.inputError,
-              ]}
+              style={[CommonStyles.input, errors.date && styles.inputError]}
               onPress={() => setShowDatePicker(true)}
             >
               <Text style={{ color: Colors.text, fontSize: 14 }}>
