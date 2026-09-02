@@ -1,3 +1,5 @@
+import { ServiceStatus, ServiceStatusLabel } from "../utils/serviceStatus";
+
 // ─── Auth ────────────────────────────────────────────────────────────────────
 export interface User {
   id: number;
@@ -62,12 +64,7 @@ export interface ServiceSubCategory {
 }
 
 // ─── Service Request ─────────────────────────────────────────────────────────
-export type ServiceStatus =
-  | "Request received"
-  | "Technician Assigned"
-  | "Work In Progress"
-  | "On Hold"
-  | "Completed";
+export type { ServiceStatus, ServiceStatusLabel, BadgeColor, TimelineStepKey } from "../utils/serviceStatus";
 
 export interface ServiceRequest {
   id: number;

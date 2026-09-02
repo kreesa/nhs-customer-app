@@ -26,6 +26,13 @@ export type ServiceStatus =
   | "paid"
   | "cancelled";
 
+  export type ServiceStatusLabel =
+  | "Request received"
+  | "Technician Assigned"
+  | "Work In Progress"
+  | "On Hold"
+  | "Completed";
+
 // Raw color names from the spec. If your <Badge /> component expects a
 // different prop vocabulary (e.g. "success" / "warning"), keep this as-is
 // and translate at the very end via BADGE_COLOR_TO_VARIANT below —
@@ -76,6 +83,10 @@ const FALLBACK_CONFIG: StatusConfig = {
   badgeColor: "gray",
   timelineStep: "requestReceived",
 };
+
+// Derived label type — no separate hardcoded list to keep in sync
+// export type ServiceStatusLabel = StatusConfig["label"];
+
 
 /** Full config (label + badge color + timeline step) for a raw status. */
 export function getStatusConfig(status?: string | null): StatusConfig {
