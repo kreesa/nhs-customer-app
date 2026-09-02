@@ -63,11 +63,11 @@ export interface ServiceSubCategory {
 
 // ─── Service Request ─────────────────────────────────────────────────────────
 export type ServiceStatus =
-  | 'Request received'
-  | 'Technician Assigned'
-  | 'Work In Progress'
-  | 'On Hold'
-  | 'Completed';
+  | "Request received"
+  | "Technician Assigned"
+  | "Work In Progress"
+  | "On Hold"
+  | "Completed";
 
 export interface ServiceRequest {
   id: number;
@@ -88,7 +88,7 @@ export interface ServiceRequest {
   send_quotation_to_customer: boolean;
   agreed_to_quotation: boolean;
   total_payable_amount?: number;
-  payment_method?: 'Online' | 'Cash';
+  payment_method?: "Online" | "Cash";
   payment_screenshot?: string;
   payment_remark?: string;
   customer_confirmation_signature?: string;
@@ -160,20 +160,20 @@ export interface InvoiceSummary {
 export interface PaymentPayload {
   agreed_to_quotation: boolean;
   total_payable_amount: number;
-  payment_method: 'Online' | 'Cash';
+  payment_method: "Online" | "Cash";
   payment_screenshot?: string;
   payment_remark?: string;
 }
 
 // ─── Feedback ────────────────────────────────────────────────────────────────
 export type TopQuality =
-  | 'Punctual'
-  | 'Polite'
-  | 'Skilled'
-  | 'Honest'
-  | 'Clean Work'
-  | 'Quick Response'
-  | 'Reliable';
+  | "Punctual"
+  | "Polite"
+  | "Skilled"
+  | "Honest"
+  | "Clean Work"
+  | "Quick Response"
+  | "Reliable";
 
 export interface FeedbackPayload {
   service_id: number;
