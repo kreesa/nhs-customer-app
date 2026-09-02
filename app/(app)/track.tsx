@@ -408,7 +408,8 @@ export default function Track() {
               */}
             </View>
             {/* Distance/ETA rows hidden for now */}
-            <View style={{ padding: 14 }}>
+            {/* Commented for now - to be uncommented if necessary */}
+            {/* <View style={{ padding: 14 }}>
               <RowKV
                 label={t("estimatedArrival")}
                 value={etaMinutes != null ? `${etaMinutes} ${t("minutes")}` : "—"}
@@ -417,7 +418,7 @@ export default function Track() {
                 label={t("distanceRemaining")}
                 value={distanceKm != null ? `${distanceKm.toFixed(1)} km` : "—"}
               />
-            </View>
+            </View> */}
             
           </Card>
         )}
