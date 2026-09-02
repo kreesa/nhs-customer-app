@@ -113,6 +113,7 @@ export const translations = {
     scheduledDate: 'Scheduled Date',
     scheduledTimeSlot: 'Scheduled Time Slot',
     estimatedAmount: 'Estimated Amount',
+    estimatedAmountNote: 'This is an estimated amount. The final cost may change based on additional services or materials used.',
     liveTracker: 'Live Tracker',
     serviceRequestNo: 'Service Request No. - ',
 
@@ -324,7 +325,7 @@ export const translations = {
     scheduledDate: 'निर्धारित मिति',
     scheduledTimeSlot: 'निर्धारित समय',
     estimatedAmount: 'अनुमानित रकम',
-    liveTracker: 'लाइभ ट्र्याकर',
+    estimatedAmountNote: 'यो अनुमानित रकम मात्र हो। थप सेवा वा सामग्रीको प्रयोगको आधारमा अन्तिम रकम फरक हुन सक्छ।',    liveTracker: 'लाइभ ट्र्याकर',
     serviceRequestNo: 'सेवा अनुरोध नं. - ',
 
     // Services List

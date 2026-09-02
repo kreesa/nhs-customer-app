@@ -10,8 +10,10 @@ import {
   TouchableOpacity,
   View,
   Linking,
+  Pressable,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 import { Colors, CommonStyles, Radius, Spacing } from "../src/components/theme";
 import {
   AppButton,
@@ -359,7 +361,21 @@ export default function Track() {
               last
             />
             <RowKV
-              label={t("estimatedAmount")}
+              label={
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                  <Text style={{ fontSize: 13, color: Colors.text2 }}>
+                    {t("estimatedAmount")}
+                  </Text>
+                  <Pressable
+                    hitSlop={8}
+                    onPress={() =>
+                      Alert.alert(t("estimatedAmount"), t("estimatedAmountNote"))
+                    }
+                  >
+                    <Ionicons name="information-circle-outline" size={15} color={Colors.text} />
+                  </Pressable>
+                </View>
+              }
               value={job.original_estimate_amount}
               last
             />
