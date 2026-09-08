@@ -16,6 +16,7 @@ import {
 } from "react-native";
 
 import MapView, { Marker } from "react-native-maps";
+import { useActionSheet } from "@expo/react-native-action-sheet";
 import { Colors, CommonStyles, Radius, Spacing } from "../src/components/theme";
 import { AppButton, Card, PageHeader } from "../src/components/ui";
 import { useLanguage } from "../src/context/LanguageContext";
@@ -40,6 +41,9 @@ export default function Request() {
   const { categoryId } = useLocalSearchParams();
 
   // console.log("CATEGORY ID FROM ROUTE:", categoryId);
+
+
+  const { showActionSheetWithOptions } = useActionSheet();   // for camera option in pick image and upload
 
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [subCategories, setSubCategories] = useState<ServiceSubCategory[]>([]);
@@ -313,37 +317,85 @@ export default function Request() {
     }
   };
 
-  //pickimage and upload
+  // pick image and upload
   const pickImage = async () => {
     if (images.length >= 3) {
-      Alert.alert("Limit reached", "Maximum 3 files allowed.");
+      Alert.alert(t("imagePickerLimitReachedTitle"), t("imagePickerLimitReachedMessage"));
       return;
     }
 
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes:  ["images"],
-        quality: 0.5,
-        allowsEditing: false,
-        exif: false,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const uri = result.assets[0]?.uri;
-        if (uri) {
-          // Compress + resize before storing
-          const compressed = await ImageManipulator.manipulateAsync(
-            uri,
-            [{ resize: { width: 1080 } }], // scale down, height auto-scales
-            { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG },
-          );
-          setImages((prev) => [...prev, compressed.uri]);
-        }
+    const openCamera = async () => {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(t("imagePickerPermissionTitle"), t("imagePickerCameraPermissionMessage"));
+        return;
       }
-    } catch (err: any) {
-      console.error("Image picker error:", err.message);
-      Alert.alert("Error", "Could not open image picker.");
-    }
+      await launchPicker(() =>
+        ImagePicker.launchCameraAsync({
+          quality: 0.5,
+          allowsEditing: false,
+          exif: false,
+        })
+      );
+    };
+
+    const openGallery = async () => {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(t("imagePickerPermissionTitle"), t("imagePickerGalleryPermissionMessage"));
+        return;
+      }
+      await launchPicker(() =>
+        ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          quality: 0.5,
+          allowsEditing: false,
+          exif: false,
+        })
+      );
+    };
+
+    const launchPicker = async (
+      launchFn: () => Promise<ImagePicker.ImagePickerResult>
+    ) => {
+      try {
+        const result = await launchFn();
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const uri = result.assets[0]?.uri;
+          if (uri) {
+            // Compress + resize before storing
+            const compressed = await ImageManipulator.manipulateAsync(
+              uri,
+              [{ resize: { width: 1080 } }], // scale down, height auto-scales
+              { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG },
+            );
+            setImages((prev) => [...prev, compressed.uri]);
+          }
+        }
+      } catch (err: any) {
+        console.error("Image picker error:", err.message);
+        Alert.alert(t("imagePickerErrorTitle"), t("imagePickerErrorMessage"));
+      }
+    };
+
+    const options = [
+      t("imagePickerTakePhoto"),
+      t("imagePickerChooseFromGallery"),
+      t("commonCancel"),
+    ];
+    const cancelButtonIndex = 2;
+
+    showActionSheetWithOptions(
+      {
+        options,
+        cancelButtonIndex,
+      },
+      (buttonIndex) => {
+        if (buttonIndex === 0) openCamera();
+        else if (buttonIndex === 1) openGallery();
+      }
+    );
   };
 
   const inputStyle = (name: string) => [

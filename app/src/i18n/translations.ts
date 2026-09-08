@@ -84,6 +84,18 @@ export const translations = {
     error: 'Error',
     sessionExpiredLoginAgain: 'Session expired. Please log in again.',
 
+    // Image Picker
+    imagePickerLimitReachedTitle: 'Limit reached',
+    imagePickerLimitReachedMessage: 'Maximum 3 files allowed.',
+    imagePickerPermissionTitle: 'Permission needed',
+    imagePickerCameraPermissionMessage: 'Camera access is required to take a photo.',
+    imagePickerGalleryPermissionMessage: 'Gallery access is required to pick a photo.',
+    imagePickerErrorTitle: 'Error',
+    imagePickerErrorMessage: 'Could not open image picker.',
+    imagePickerTakePhoto: 'Take Photo',
+    imagePickerChooseFromGallery: 'Choose from Gallery',
+    commonCancel: 'Cancel',
+
     // Track
     jobTracker: 'Job tracker',
     assignedTechnician: 'Assigned technician',
@@ -296,6 +308,18 @@ export const translations = {
     error: 'त्रुटि',
     sessionExpiredLoginAgain: 'तपाईंको सत्र समाप्त भएको छ। कृपया फेरि लगइन गर्नुहोस्।',
 
+    // Image Picker
+    imagePickerLimitReachedTitle: 'सीमा पुगियो',
+    imagePickerLimitReachedMessage: 'बढीमा ३ वटा फाइल मात्र अनुमति छ।',
+    imagePickerPermissionTitle: 'अनुमति आवश्यक',
+    imagePickerCameraPermissionMessage: 'फोटो खिच्नको लागि क्यामेरा अनुमति आवश्यक छ।',
+    imagePickerGalleryPermissionMessage: 'फोटो छान्नको लागि ग्यालेरी अनुमति आवश्यक छ।',
+    imagePickerErrorTitle: 'त्रुटि',
+    imagePickerErrorMessage: 'इमेज पिकर खोल्न सकिएन।',
+    imagePickerTakePhoto: 'फोटो खिच्नुहोस्',
+    imagePickerChooseFromGallery: 'ग्यालेरीबाट छान्नुहोस्',
+    commonCancel: 'रद्द गर्नुहोस्',
+    
     // Track
     jobTracker: 'काम ट्र्याकर',
     assignedTechnician: 'तोकिएको प्राविधिक',
