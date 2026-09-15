@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useState } from "react";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Alert,
   ScrollView,
@@ -9,16 +9,14 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  SafeAreaView,
+  View
 } from "react-native";
 
-import { login, saveToken } from "../src/services/api";
-import { getDeviceName } from "../src/services/device";
-import { useAuth } from '../src/context/AuthContext';
-import { useLanguage } from "../src/context/LanguageContext";
-import { Colors } from '../src/components/theme';
+import { Colors } from "../src/components/theme";
 import { AppButton } from "../src/components/ui";
+import { useAuth } from "../src/context/AuthContext";
+import { useLanguage } from "../src/context/LanguageContext";
+import { forgotPassword, login } from "../src/services/api";
 
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
@@ -34,6 +32,7 @@ export default function LoginScreen() {
 
   const [secureText, setSecureText] = useState(true);
 
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const validateEmail = (email: string) => /\S+@\S+\.\S+/.test(email);
   const validatePassword = (pass: string) => pass.length >= 8;
@@ -53,7 +52,7 @@ export default function LoginScreen() {
       setLoading(true);
 
       // const device_name = await getDeviceName();
-      const device_name = 'customer-app';
+      const device_name = "customer-app";
 
       const data = await login(email, password, device_name);
 
@@ -73,36 +72,55 @@ export default function LoginScreen() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert("Email required", "Please enter your email address first.");
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const data = await forgotPassword(email, "customer-app");
+      Alert.alert("Check your email", data.message);
+    } catch (err: any) {
+      const message =
+        err?.errors?.email?.[0] ||
+        err?.message ||
+        "Something went wrong. Please try again.";
+      Alert.alert("Error", message);
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   return (
     <View style={styles.root}>
-
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.iconCircle}>
           <Ionicons name="construct" size={28} color="#fff" />
         </View>
 
-        <Text style={styles.appName}>{t('appName')}</Text>
+        <Text style={styles.appName}>{t("appName")}</Text>
 
-        <Text style={styles.welcomeSubtitle}>{t('tagline')}</Text>
+        <Text style={styles.welcomeSubtitle}>{t("tagline")}</Text>
 
-        <Text style={styles.welcomeTitle}>{t('welcomeBack')}</Text>
+        <Text style={styles.welcomeTitle}>{t("welcomeBack")}</Text>
 
         <View style={styles.card}>
-
           {/* Tabs */}
           <View style={styles.tabRow}>
             <View style={[styles.tab, styles.tabActive]}>
-              <Text style={styles.tabActiveText}>{t('signIn')}</Text>
+              <Text style={styles.tabActiveText}>{t("signIn")}</Text>
             </View>
             <TouchableOpacity
               style={styles.tab}
-              onPress={() => router.replace('/register')}
+              onPress={() => router.replace("/register")}
             >
-              <Text style={styles.tabInactiveText}>{t('register')}</Text>
+              <Text style={styles.tabInactiveText}>{t("register")}</Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.label}>{t('email')}</Text>
+          <Text style={styles.label}>{t("email")}</Text>
           <TextInput
             placeholder="example@gmail.com"
             placeholderTextColor="#9CA3AF"
@@ -113,7 +131,7 @@ export default function LoginScreen() {
             keyboardType="email-address"
           />
 
-          <Text style={styles.label}>{t('password')}</Text>
+          <Text style={styles.label}>{t("password")}</Text>
           <View style={styles.passwordContainer}>
             <TextInput
               placeholder="••••••••"
@@ -133,23 +151,28 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.forgotWrap}>
-            <Text style={styles.forgotText}>{t('forgotPassword')}</Text>
+          <TouchableOpacity
+            style={styles.forgotWrap}
+            onPress={handleForgotPassword}
+            disabled={forgotLoading}
+          >
+            <Text style={styles.forgotText}>
+              {forgotLoading ? "Sending..." : "Forgot Password"}
+            </Text>
           </TouchableOpacity>
 
-          <AppButton 
-            label={t('signIn')} 
+          <AppButton
+            label={t("signIn")}
             onPress={handleLogin}
-           loading={loading} />
-
+            loading={loading}
+          />
         </View>
 
         <Text style={styles.termsText}>
-          <Text style={styles.termsText}>{t('termsText')}</Text>{" "}
-          <Text style={styles.linkText}>{t('terms')}</Text> &{" "}
-          <Text style={styles.linkText}>{t('privacyPolicy')}</Text>
+          <Text style={styles.termsText}>{t("termsText")}</Text>{" "}
+          <Text style={styles.linkText}>{t("terms")}</Text> &{" "}
+          <Text style={styles.linkText}>{t("privacyPolicy")}</Text>
         </Text>
-
       </ScrollView>
     </View>
   );
@@ -340,9 +363,12 @@ const styles = StyleSheet.create({
   },
 
   notifDot: {
-    width: 8, height: 8, borderRadius: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: Colors.red,
-    position: 'absolute', top: 0, right: 0,
+    position: "absolute",
+    top: 0,
+    right: 0,
   },
-
 });

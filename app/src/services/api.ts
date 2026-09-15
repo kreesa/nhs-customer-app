@@ -106,6 +106,18 @@ export async function logout() {
   return response.json();
 }
 
+export async function forgotPassword(email: string, device_name: string) {
+  const data = await request<any>("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({
+      email,
+      device_name,
+    }),
+  });
+
+  return data;
+}
+
 /* ─────────────────────────────────────────────
    OPTIONAL: MODERN AUTH API (for future use)
    (you can switch to this later)
