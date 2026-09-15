@@ -1,8 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { getNotifications } from "../services/api";
 import { LanguageToggle } from "./LanguageToggle";
 import { Colors } from "./theme";
 import { Topbar } from "./ui";
@@ -19,27 +22,59 @@ export function AppHeader() {
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
 
+  const router = useRouter();
+
   // console.log("isLoggedIn:", isLoggedIn);
   // console.log("User:", user);
+
+  const [hasUnread, setHasUnread] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isLoggedIn) {
+        setHasUnread(false);
+        return;
+      }
+
+      let active = true;
+
+      getNotifications()
+        .then((res) => {
+          if (active) setHasUnread(res.unread_count > 0);
+        })
+        .catch(() => {});
+
+      return () => {
+        active = false;
+      };
+    }, [isLoggedIn]),
+  );
 
   return (
     <View style={{ paddingTop: insets.top, backgroundColor: Colors.brandDark }}>
       <Topbar
-        subtitle={isLoggedIn ? t(getGreeting()) : t('appName')}
-        title={isLoggedIn ? (user?.name?.split(" ")[0] ?? "") : t("customerApp")}
+        subtitle={isLoggedIn ? t(getGreeting()) : t("appName")}
+        title={
+          isLoggedIn ? (user?.name?.split(" ")[0] ?? "") : t("customerApp")
+        }
         right={
           <View style={styles.rightRow}>
             <LanguageToggle />
-            {/* {isLoggedIn && (
-              <TouchableOpacity style={{ position: "relative" }}>
+
+            {/* Notification Button */}
+            {isLoggedIn && (
+              <TouchableOpacity
+                style={{ position: "relative" }}
+                onPress={() => router.push("/(app)/notifications")}
+              >
                 <Ionicons
                   name="notifications-outline"
                   size={22}
                   color={Colors.white}
                 />
-                <View style={styles.notifDot} />
+                {hasUnread && <View style={styles.notifDot} />}
               </TouchableOpacity>
-            )} */}
+            )}
           </View>
         }
       />

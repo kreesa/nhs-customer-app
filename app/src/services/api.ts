@@ -181,7 +181,10 @@ export const serviceApi = {
 
     formData.append("customer_id", String(data.customer_id));
     formData.append("service_category_id", String(data.service_category_id));
-    formData.append("service_sub_category_id", String(data.service_sub_category_id));
+    formData.append(
+      "service_sub_category_id",
+      String(data.service_sub_category_id),
+    );
     formData.append("description", data.description);
     formData.append("site_address", data.site_address);
     formData.append("site_longitude", String(data.site_longitude));
@@ -256,7 +259,7 @@ export const serviceApi = {
 
   submitPayment: async (
     serviceId: number,
-    payload: { payment_method: "online" | "cash"; proof_url: string }
+    payload: { payment_method: "online" | "cash"; proof_url: string },
   ): Promise<void> => {
     return request(`/api/service-requests/${serviceId}/payment`, {
       method: "POST",
@@ -284,3 +287,53 @@ export const feedbackApi = {
       body: JSON.stringify(data),
     }),
 };
+
+/* ===========================================================
+   NOTIFICATION
+=========================================================== */
+export interface NotificationItem {
+  id: string;
+  data: {
+    event: string;
+    title: string;
+    message: string;
+    data: {
+      job_id: number;
+      [key: string]: any;
+    };
+  };
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface NotificationsResponse {
+  data: NotificationItem[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    total: number;
+  };
+  unread_count: number;
+}
+
+export async function getNotifications(page: number = 1) {
+  const data = await request<NotificationsResponse>(
+    `/api/notifications?page=${page}`,
+    { method: "GET" },
+  );
+  return data;
+}
+
+export async function deleteNotification(notificationId: string) {
+  const data = await request<any>(`/api/notifications/${notificationId}`, {
+    method: "DELETE",
+  });
+  return data;
+}
+
+export async function markNotificationRead(notificationId: string) {
+  const data = await request<any>(`/api/notifications/${notificationId}/read`, {
+    method: "PATCH",
+  });
+  return data;
+}
