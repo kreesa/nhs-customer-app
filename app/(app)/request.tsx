@@ -15,8 +15,8 @@ import {
   View,
 } from "react-native";
 
-import MapView, { Marker } from "react-native-maps";
 import { useActionSheet } from "@expo/react-native-action-sheet";
+import MapView, { Marker } from "react-native-maps";
 import { Colors, CommonStyles, Radius, Spacing } from "../src/components/theme";
 import { AppButton, Card, PageHeader } from "../src/components/ui";
 import { useLanguage } from "../src/context/LanguageContext";
@@ -42,8 +42,7 @@ export default function Request() {
 
   // console.log("CATEGORY ID FROM ROUTE:", categoryId);
 
-
-  const { showActionSheetWithOptions } = useActionSheet();   // for camera option in pick image and upload
+  const { showActionSheetWithOptions } = useActionSheet(); // for camera option in pick image and upload
 
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [subCategories, setSubCategories] = useState<ServiceSubCategory[]>([]);
@@ -61,6 +60,8 @@ export default function Request() {
   const [address, setAddress] = useState("");
   // To be Updated
   // const [address, setAddress] = useState(user?.service_address ?? '');
+  const [addressDetail, setAddressDetail] = useState("");
+
   const [images, setImages] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -254,10 +255,14 @@ export default function Request() {
     if (!userId) {
       Alert.alert(t("error"), t("sessionExpiredLoginAgain"));
       return;
-    }         
+    }
 
     setLoading(true);
     try {
+      const fullAddressPayload = addressDetail.trim()
+        ? `${address} | ${addressDetail.trim()}`
+        : address;
+
       // Files are sent directly to /api/jobs as multipart form-data —
       // serviceApi.createRequest handles building the FormData and
       // attaching each image, so no separate upload step is needed here.
@@ -266,7 +271,7 @@ export default function Request() {
         service_category_id: selectedCategory,
         service_sub_category_id: selectedSubCategory,
         description: description,
-        site_address: address,
+        site_address: fullAddressPayload,
         site_longitude: longitude ?? 0,
         site_latitude: latitude ?? 0,
         scheduled_for: selectedDate.toISOString().split("T")[0],
@@ -276,7 +281,11 @@ export default function Request() {
 
       console.log("Submitting payload:", JSON.stringify(payload, null, 2));
 
-      const req = await serviceApi.createRequest(Number(userId), payload, images);
+      const req = await serviceApi.createRequest(
+        Number(userId),
+        payload,
+        images,
+      );
       // console.log("Number(userId):", JSON.stringify(Number(userId), null, 2));
       // console.log("Request created:", JSON.stringify(req, null, 2));
 
@@ -320,14 +329,20 @@ export default function Request() {
   // pick image and upload
   const pickImage = async () => {
     if (images.length >= 3) {
-      Alert.alert(t("imagePickerLimitReachedTitle"), t("imagePickerLimitReachedMessage"));
+      Alert.alert(
+        t("imagePickerLimitReachedTitle"),
+        t("imagePickerLimitReachedMessage"),
+      );
       return;
     }
 
     const openCamera = async () => {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(t("imagePickerPermissionTitle"), t("imagePickerCameraPermissionMessage"));
+        Alert.alert(
+          t("imagePickerPermissionTitle"),
+          t("imagePickerCameraPermissionMessage"),
+        );
         return;
       }
       await launchPicker(() =>
@@ -335,14 +350,18 @@ export default function Request() {
           quality: 0.5,
           allowsEditing: false,
           exif: false,
-        })
+        }),
       );
     };
 
     const openGallery = async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(t("imagePickerPermissionTitle"), t("imagePickerGalleryPermissionMessage"));
+        Alert.alert(
+          t("imagePickerPermissionTitle"),
+          t("imagePickerGalleryPermissionMessage"),
+        );
         return;
       }
       await launchPicker(() =>
@@ -351,12 +370,12 @@ export default function Request() {
           quality: 0.5,
           allowsEditing: false,
           exif: false,
-        })
+        }),
       );
     };
 
     const launchPicker = async (
-      launchFn: () => Promise<ImagePicker.ImagePickerResult>
+      launchFn: () => Promise<ImagePicker.ImagePickerResult>,
     ) => {
       try {
         const result = await launchFn();
@@ -394,7 +413,7 @@ export default function Request() {
       (buttonIndex) => {
         if (buttonIndex === 0) openCamera();
         else if (buttonIndex === 1) openGallery();
-      }
+      },
     );
   };
 
@@ -544,26 +563,6 @@ export default function Request() {
 
         {/* Location */}
         <Card label={`${t("serviceLocation")} *`}>
-          <View style={styles.field}>
-            <Text style={CommonStyles.fieldLabel}>
-              {t("fullAddress")} <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={[
-                ...inputStyle("addr"),
-                errors.location && styles.inputError,
-              ]}
-              value={address}
-              onChangeText={(val) => {
-                setAddress(val);
-                setErrors((prev) => ({ ...prev, address: undefined }));
-              }}
-              onFocus={() => setFocused("addr")}
-              onBlur={() => setFocused(null)}
-              placeholderTextColor={Colors.text3}
-              editable={false}
-            />
-          </View>
           {/* Map placeholder */}
           <View>
             <TouchableOpacity
@@ -630,9 +629,43 @@ export default function Request() {
                 </View>
               )}
             </TouchableOpacity>
+
+            {/* Map-derived address, shown below the map */}
+            {address ? (
+              <View style={styles.mapAddressBox}>
+                <Text style={styles.mapAddressText}>{address}</Text>
+              </View>
+            ) : null}
+
             {errors.location ? (
               <Text style={styles.errorText}>{errors.location}</Text>
             ) : null}
+          </View>
+
+          <View style={[styles.field, { marginTop: 15}]}>
+            <Text style={CommonStyles.fieldLabel}>
+              {t("addressDetail") /* e.g. "Additional Address Detail" */}
+            </Text>
+            <TextInput
+              style={[
+                ...inputStyle("addr"),
+                errors.location && styles.inputError,
+              ]}
+              value={addressDetail}
+              onChangeText={(val) => {
+                setAddressDetail(val);
+                setErrors((prev) => ({ ...prev, address: undefined }));
+              }}
+              onFocus={() => setFocused("addr")}
+              onBlur={() => setFocused(null)}
+              placeholder={
+                t(
+                  "addressDetailPlaceholder",
+                ) /* e.g. "Apartment, landmark, floor..." */
+              }
+              placeholderTextColor={Colors.text3}
+              editable={true}
+            />
           </View>
         </Card>
 
@@ -858,4 +891,10 @@ const styles = StyleSheet.create({
   required: { color: Colors.red, fontSize: 13 },
   errorText: { color: Colors.red, fontSize: 12, marginTop: 4 },
   inputError: { borderColor: Colors.red },
+  mapAddressBox: { marginTop: 8, paddingHorizontal: 4 },
+  mapAddressText: {
+    fontSize: 12,
+    color: Colors.text2 ?? "#555",
+    lineHeight: 16,
+  },
 });
