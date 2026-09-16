@@ -4,6 +4,8 @@ import { router } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -94,8 +96,14 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <ScrollView contentContainerStyle={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.iconCircle}>
           <Ionicons name="construct" size={28} color="#fff" />
         </View>
@@ -174,7 +182,7 @@ export default function LoginScreen() {
           <Text style={styles.linkText}>{t("privacyPolicy")}</Text>
         </Text>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
