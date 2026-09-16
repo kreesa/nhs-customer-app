@@ -25,6 +25,7 @@ import {
   RowKV
 } from "../src/components/ui";
 import { useLanguage } from "../src/context/LanguageContext";
+import { useAuth } from "../src/context/AuthContext";
 import { serviceApi } from "../src/services/api";
 import {
   getStatusBadgeColor,
@@ -33,6 +34,7 @@ import {
 } from "../src/utils/serviceStatus";
 import { haversineKm, estimateEtaMinutes } from "../src/utils/location";
 import { PricingSummary, ServiceRequest, TrackingData, InvoiceSummary } from "../src/types";
+import MediaImage, { MediaViewerModal, ViewerState } from "../src/components/MediaImage";
 
 
 const TIMELINE_STEPS = [
@@ -97,6 +99,7 @@ export default function Track() {
   const servId = Number(serviceId);
 
   const { t } = useLanguage();
+  const { token } = useAuth();
 
   const [job, setJob] = useState<ServiceRequest | null>(null);
   const [tracking, setTracking] = useState<TrackingData | null>(null);
@@ -114,6 +117,8 @@ export default function Track() {
   const [paymentMethod, setPaymentMethod] = useState<"online" | "cash" | null>(null);
   const [proofUri, setProofUri] = useState<string | null>(null);
   const [submittingPayment, setSubmittingPayment] = useState(false);
+
+  const [viewer, setViewer] = useState<ViewerState>(null);
 
   const loadJob = async () => {
     try {
@@ -311,6 +316,9 @@ export default function Track() {
       .join("")
       .toUpperCase() ?? "?";
 
+  const media = job.media?.filter((m) => m.collection === "issue") || [];
+  const signatureMedia = job.media?.find((m) => m.collection === "digital_signature");
+
   return (
     <View style={CommonStyles.screen}>
       <PageHeader title={t("jobTracker")} onBack={() => router.back()} />
@@ -380,6 +388,26 @@ export default function Track() {
               last
             />
           </View>
+        </Card>
+
+        {/* Photos */}
+        <Card label="Photos">
+          {media.length === 0 ? (
+            <Text style={{ fontSize: 12, color: Colors.text2, padding: 14 }}>No images uploaded</Text>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ padding: 14 }}>
+              {media.map((m: any, i: number) => (
+                <MediaImage
+                  key={m.id}
+                  m={m}
+                  token={token}
+                  mode="thumb"
+                  style={styles.photoThumb}
+                  onPress={() => setViewer({ list: media, index: i })}
+                />
+              ))}
+            </ScrollView>
+          )}
         </Card>
 
         {/* Track Job in Progress */}
@@ -590,6 +618,23 @@ export default function Track() {
         </Card>
         )}
 
+        {/* Signature */}
+        {job.status === "paid" && signatureMedia && (
+          <Card label="Signature">
+            <View style={{ padding: 14 }}>
+              <MediaImage
+                m={signatureMedia}
+                token={token}
+                mode="thumb"
+                style={styles.photoThumb}
+                onPress={() => setViewer({ list: [signatureMedia], index: 0 })}
+              />
+            </View>
+          </Card>
+        )}
+
+        <MediaViewerModal viewer={viewer} token={token} onClose={() => setViewer(null)} />
+
         {/* Payment */}
         {job.status === "invoiced" && (
         <Card label="Payment">
@@ -774,5 +819,13 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: 20,
     alignItems: "center",
+  },
+  photoThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: Radius.md,
+    marginRight: 8,
+    overflow: "hidden",
+    backgroundColor: Colors.border,
   },
 });
