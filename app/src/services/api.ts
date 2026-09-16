@@ -1,4 +1,4 @@
-const BASE_URL = "https://nepalhomeservice.com";
+export const BASE_URL = "https://nepalhomeservice.com";
 
 import * as SecureStore from "expo-secure-store";
 
