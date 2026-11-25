@@ -52,7 +52,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   // Throw structured error for non-2xx responses
   if (!response.ok) {
-    throw new Error(data.message || `HTTP ${response.status}`);
+    console.log("API error:", response.status, path, JSON.stringify(data));
+    const err: any = new Error(data.message || `HTTP ${response.status}`);
+    err.status = response.status;
+    err.body = data;
+    throw err;
   }
 
   return data;
@@ -286,6 +290,30 @@ export const feedbackApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+};
+
+/* ===========================================================
+   ESEWA QR
+=========================================================== */
+export type EsewaQr = {
+  invoiceId: number;
+  paymentId: number;
+  transactionUuid: string;
+  amount: string;
+  qrPayload: string;
+  qrCodeDataUri: string;
+  expiresAt: string;
+};
+
+export const paymentQrApi = {
+  getEsewaIntentQr: async (jobId: number | string): Promise<EsewaQr> => {
+    const res: any = await request(`/api/technician/jobs/${jobId}/invoice/esewa-intent-qr`, {
+      method: "POST",
+    });
+    const payload = res?.data ?? res;
+    if (!payload?.qrCodeDataUri) throw new Error("qrCodeDataUri missing in response");
+    return payload;
+  },
 };
 
 /* ===========================================================

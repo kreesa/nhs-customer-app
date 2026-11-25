@@ -35,6 +35,7 @@ import {
 import { haversineKm, estimateEtaMinutes } from "../src/utils/location";
 import { PricingSummary, ServiceRequest, TrackingData, InvoiceSummary } from "../src/types";
 import MediaImage, { MediaViewerModal, ViewerState } from "../src/components/MediaImage";
+import PaymentQRCard from "../src/components/PaymentQRCard";
 
 
 const TIMELINE_STEPS = [
@@ -637,50 +638,59 @@ export default function Track() {
 
         {/* Payment */}
         {job.status === "invoiced" && (
-        <Card label="Payment">
-          <View style={{ padding: 14 }}>
-            <Text style={CommonStyles.fieldLabel}>Payment Method</Text>
-            <View style={{ flexDirection: "row", gap: 10, marginTop: 6, marginBottom: 16 }}>
-              <TouchableOpacity
-                style={[styles.methodChip, paymentMethod === "online" && styles.methodChipSelected]}
-                onPress={() => setPaymentMethod("online")}
-              >
-                <Text style={[styles.methodChipText, paymentMethod === "online" && styles.methodChipTextSelected]}>
-                  Online
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.methodChip, paymentMethod === "cash" && styles.methodChipSelected]}
-                onPress={() => setPaymentMethod("cash")}
-              >
-                <Text style={[styles.methodChipText, paymentMethod === "cash" && styles.methodChipTextSelected]}>
-                  Cash
-                </Text>
-              </TouchableOpacity>
-            </View>
+          <Card label="Payment">
+            <View style={{ padding: 14 }}>
+              <Text style={CommonStyles.fieldLabel}>Payment Method</Text>
+              <View style={{ flexDirection: "row", gap: 10, marginTop: 6, marginBottom: 16 }}>
+                <TouchableOpacity
+                  style={[styles.methodChip, paymentMethod === "online" && styles.methodChipSelected]}
+                  onPress={() => setPaymentMethod("online")}
+                >
+                  <Text style={[styles.methodChipText, paymentMethod === "online" && styles.methodChipTextSelected]}>
+                    Online
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.methodChip, paymentMethod === "cash" && styles.methodChipSelected]}
+                  onPress={() => setPaymentMethod("cash")}
+                >
+                  <Text style={[styles.methodChipText, paymentMethod === "cash" && styles.methodChipTextSelected]}>
+                    Cash
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
-            <Text style={CommonStyles.fieldLabel}>Upload Document</Text>
-            <TouchableOpacity style={styles.uploadBox} onPress={pickProofImage}>
-              {proofUri ? (
-                <Image source={{ uri: proofUri }} style={{ width: 100, height: 100, borderRadius: 8 }} resizeMode="cover" />
-              ) : (
+              {/* Online → QR */}
+              {paymentMethod === "online" && <PaymentQRCard jobId={job.id} />}
+
+              {/* Cash → upload proof + submit */}
+              {paymentMethod === "cash" && (
                 <>
-                  <Text style={{ fontSize: 28, color: Colors.brand, marginBottom: 4 }}>📎</Text>
-                  <Text style={{ fontSize: 13, color: Colors.text3 }}>Tap to upload invoice/screenshot</Text>
+                  <Text style={CommonStyles.fieldLabel}>Upload Document</Text>
+                  <TouchableOpacity style={styles.uploadBox} onPress={pickProofImage}>
+                    {proofUri ? (
+                      <Image source={{ uri: proofUri }} style={{ width: 100, height: 100, borderRadius: 8 }} resizeMode="cover" />
+                    ) : (
+                      <>
+                        <Text style={{ fontSize: 28, color: Colors.brand, marginBottom: 4 }}>📎</Text>
+                        <Text style={{ fontSize: 13, color: Colors.text3 }}>Tap to upload invoice/screenshot</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <AppButton
+                    label="Submit Payment"
+                    onPress={handleSubmitPayment}
+                    loading={submittingPayment}
+                    style={{ marginTop: 16 }}
+                  />
                 </>
               )}
-            </TouchableOpacity>
+            </View>
+          </Card>
+        )}
 
-            <AppButton
-              label="Submit Payment"
-              onPress={handleSubmitPayment}
-              loading={submittingPayment}
-              style={{ marginTop: 16 }}
-            />
-          </View>
-        </Card>
-        )}    
-
+        
         {/* Quotation Approval */}
         {job.send_quotation_to_customer &&
           !job.agreed_to_quotation &&
