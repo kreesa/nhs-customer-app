@@ -1,0 +1,59 @@
+name: iOS unsigned build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env:
+      GOOGLE_MAPS_KEY: ${{ secrets.GOOGLE_MAPS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Prebuild (Expo managed)
+        run: |
+          if [ ! -d ios ]; then npx expo prebuild --platform ios --no-install; fi
+
+      - name: Detect workspace and scheme
+        working-directory: ios
+        run: |
+          WS=$(ls -d *.xcworkspace | head -n 1)
+          SCHEME="${WS%.xcworkspace}"
+          echo "WORKSPACE=$WS" >> $GITHUB_ENV
+          echo "SCHEME=$SCHEME" >> $GITHUB_ENV
+          echo "Using $WS / $SCHEME"
+          ls
+
+      - name: Install pods
+        working-directory: ios
+        run: pod install
+
+      - name: Build unsigned release
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+
+      - name: Package IPA
+        run: |
+          mkdir Payload
+          cp -R ios/build/Build/Products/Release-iphoneos/*.app Payload/
+          zip -r nhs-customer-unsigned.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nhs-customer-ios-ipa
+          path: nhs-customer-unsigned.ipa
