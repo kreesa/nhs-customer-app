@@ -32,10 +32,6 @@ jobs:
           echo "Using $WS / $SCHEME"
           ls
 
-      - name: Install pods
-        working-directory: ios
-        run: pod install
-
       - name: Build unsigned release
         working-directory: ios
         run: |
@@ -46,6 +42,10 @@ jobs:
             -sdk iphoneos \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+
+      - name: Install pods
+        working-directory: ios
+        run: pod install
 
       - name: Package IPA
         run: |
